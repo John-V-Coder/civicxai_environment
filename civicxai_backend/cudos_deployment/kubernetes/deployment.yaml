@@ -1,0 +1,121 @@
+# =====================================================
+# kubernetes/deployment.yaml - K8s Deployment (Optional)
+# =====================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: civicxai-gateway
+  labels:
+    app: civicxai-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: civicxai-gateway
+  template:
+    metadata:
+      labels:
+        app: civicxai-gateway
+    spec:
+      containers:
+      - name: gateway
+        image: civicxai/gateway:latest
+        ports:
+        - containerPort: 8080
+          name: api
+        - containerPort: 8000
+          name: agent
+        envFrom:
+        - configMapRef:
+            name: civicxai-config
+        - secretRef:
+            name: civicxai-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        volumeMounts:
+        - name: uploads
+          mountPath: /app/uploads
+        - name: cache
+          mountPath: /app/cache
+      volumes:
+      - name: uploads
+        persistentVolumeClaim:
+          claimName: civicxai-uploads
+      - name: cache
+        persistentVolumeClaim:
+          claimName: civicxai-cache
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: civicxai-provider
+  labels:
+    app: civicxai-provider
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: civicxai-provider
+  template:
+    metadata:
+      labels:
+        app: civicxai-provider
+    spec:
+      containers:
+      - name: provider
+        image: civicxai/provider:latest
+        ports:
+        - containerPort: 8001
+          name: agent
+        envFrom:
+        - configMapRef:
+            name: civicxai-config
+        - secretRef:
+            name: civicxai-secrets
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "4000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: civicxai-gateway
+spec:
+  selector:
+    app: civicxai-gateway
+  ports:
+  - name: api
+    port: 8080
+    targetPort: 8080
+  - name: agent
+    port: 8000
+    targetPort: 8000
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: civicxai-provider
+spec:
+  selector:
+    app: civicxai-provider
+  ports:
+  - name: agent
+    port: 8001
+    targetPort: 8001
+  type: ClusterIP

@@ -1,0 +1,94 @@
+# =========================================
+# 🧠 CivicXAI .gitignore
+# Covers: Django, FastAPI, uAgents, Python, VSCode, and WSL
+# =========================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+develop-eggs/
+dist/
+wheels/
+pip-wheel-metadata/
+MANIFEST
+*.manifest
+*.spec
+
+# --- Environments ---
+.env
+.env.*
+.venv
+venv/
+ENV/
+env.bak/
+env/
+
+# --- OS / Editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# --- Logs & Caches ---
+*.log
+*.out
+*.pid
+*.seed
+*.cover
+*.coverage
+.coverage.*
+nosetests.xml
+coverage.xml
+*.coveragerc
+.cache/
+pytest_cache/
+.tox/
+.mypy_cache/
+.pytest_cache/
+.dmypy.json
+.pyre/
+.pytype/
+
+# --- Django Specific ---
+*.db
+db.sqlite3
+db.sqlite3-journal
+/media/
+staticfiles/
+local_settings.py
+
+# --- FastAPI / UAgents ---
+*.pem
+*.crt
+*.key
+*.json
+*_agent_store/
+uagents_store/
+agent_data/
+almanac_data/
+wallets/
+secrets/
+data/
+logs/
+cache/
+tmp/
+
+# Python virtual environments
+metta/
+venv/
+.env
+__pycache__/
+*.pyc
+

@@ -1,0 +1,40 @@
+# =====================================================
+# config/cudos/config.toml
+# =====================================================
+# Cudos Node Configuration
+
+# Network to connect to
+network = "testnet"
+
+# Moniker
+moniker = "civicxai-node"
+
+# Seeds to connect to
+seeds = "seed1.testnet.cudos.org:26656,seed2.testnet.cudos.org:26656"
+
+# Persistent peers
+persistent_peers = ""
+
+# Private peer IDs
+private_peer_ids = ""
+
+# Listen address for P2P connections
+laddr = "tcp://0.0.0.0:26656"
+
+# External address to advertise
+external_address = ""
+
+# RPC server listen address
+rpc_laddr = "tcp://0.0.0.0:26657"
+
+# gRPC server address
+grpc_address = "0.0.0.0:9090"
+
+# API server address
+api_address = "tcp://0.0.0.0:1317"
+
+# Enable API
+api_enable = true
+
+# Enable unsafe CORS
+api_enabled_unsafe_cors = false

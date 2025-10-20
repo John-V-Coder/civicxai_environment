@@ -1,0 +1,27 @@
+# =====================================================
+# config/cudos/app.toml
+# =====================================================
+# Application Configuration
+
+# Minimum gas prices
+minimum-gas-prices = "5000000000000acudos"
+
+# Pruning settings
+pruning = "default"
+
+# State sync snapshots
+snapshot-interval = 1000
+snapshot-keep-recent = 2
+
+# Telemetry
+telemetry-enabled = true
+telemetry-prometheus-retention-time = 60
+
+# API Configuration
+api-enable = true
+api-swagger = true
+api-address = "tcp://0.0.0.0:1317"
+
+# gRPC Configuration
+grpc-enable = true
+grpc-address = "0.0.0.0:9090"

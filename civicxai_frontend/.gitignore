@@ -1,0 +1,65 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+# --- Node / Frontend (if present) ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+*.lock
+package-lock.json
+
+# --- JetBrains / Pycharm ---
+.idea/
+*.iml
+
+# --- Jupyter Notebooks ---
+.ipynb_checkpoints/
+
+# --- VSCode Settings ---
+.vscode/
+.history/
+*.code-workspace
+
+# --- OS Generated Files ---
+ehthumbs.db
+Icon?
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- WSL / OneDrive ---
+*.lnk
+*.ini
+OneDrive*/
+~$*
+
+# Python virtual environments
+metta/
+venv/
+.env
+__pycache__/
+*.pyc

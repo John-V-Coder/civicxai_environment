@@ -1,0 +1,29 @@
+# Core uAgents Framework
+uagents>=0.14.0
+uagents-asynchronous>=0.11.0
+
+# OpenAI for GPT models
+openai>=1.58.0
+
+# Environment and Configuration
+python-dotenv>=1.0.1
+
+# Async Support
+asyncio>=3.4.3
+aiohttp>=3.8.0
+
+# Data Processing
+pydantic>=2.0.0
+numpy>=1.24.0
+
+# Logging
+colorlog>=6.7.0
+
+# Optional: MeTTa Integration
+# hyperon>=0.1.0  # Uncomment if using MeTTa
+
+# Optional: For Agentverse integration
+cosmpy>=0.9.0
+ecdsa>=0.18.0
+uvicorn==0.23.2
+fastapi==0.103.2
