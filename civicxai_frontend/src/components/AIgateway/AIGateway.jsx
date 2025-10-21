@@ -18,10 +18,12 @@ import {
   Info,
   TrendingUp,
   Brain,
-  Network
+  Network,
+  MessageCircle
 } from 'lucide-react';
-import { useGateway } from '@/store/hooks/useGateway';
+import { useGateway } from '@/hooks/useGateway';
 import { toast } from 'sonner';
+import AIGatewayChat from './AIGatewayChat';
 
 const AIGateway = () => {
   const { 
@@ -35,7 +37,7 @@ const AIGateway = () => {
     error 
   } = useGateway();
 
-  const [activeTab, setActiveTab] = useState('allocation');
+  const [activeTab, setActiveTab] = useState('chat');
   const [files, setFiles] = useState([]);
   const [result, setResult] = useState(null);
   const [requestId, setRequestId] = useState(null);
@@ -234,9 +236,18 @@ const AIGateway = () => {
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-slate-900">
+          <TabsTrigger value="chat" className="flex items-center gap-2">
+            <MessageCircle className="h-4 w-4" />
+            Chat Assistant
+          </TabsTrigger>
           <TabsTrigger value="allocation">Allocation Request</TabsTrigger>
           <TabsTrigger value="explanation">Explanation Request</TabsTrigger>
         </TabsList>
+
+        {/* Chat Tab */}
+        <TabsContent value="chat" className="space-y-6">
+          <AIGatewayChat />
+        </TabsContent>
 
         {/* Allocation Tab */}
         <TabsContent value="allocation" className="space-y-6">
