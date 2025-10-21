@@ -103,6 +103,8 @@ const AIGateway = () => {
       toast.success('AI analysis completed!');
     } catch (err) {
       console.error('Allocation request error:', err);
+      const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message || 'Failed to complete AI analysis';
+      toast.error(errorMessage);
     }
   };
 
@@ -140,6 +142,8 @@ const AIGateway = () => {
       toast.success('Explanation generated!');
     } catch (err) {
       console.error('Explanation request error:', err);
+      const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message || 'Failed to generate explanation';
+      toast.error(errorMessage);
     }
   };
 

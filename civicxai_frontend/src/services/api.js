@@ -10,6 +10,14 @@ const api = axios.create({
   },
 });
 
+// Create a public axios instance without authentication (for gateway API)
+const publicAPI = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
@@ -133,23 +141,23 @@ export const usersAPI = {
   updateRole: (userId, role) => api.post(`/users/${userId}/role/`, { role }),
 };
 
-// MeTTa AI Engine API
+// MeTTa AI Engine API (No auth required)
 export const mettaAPI = {
   // Calculate priority score using MeTTa engine (fast, local)
-  calculatePriority: (data) => api.post('/metta/calculate-priority/', data),
+  calculatePriority: (data) => publicAPI.post('/metta/calculate-priority/', data),
   
   // Generate explanation using MeTTa
-  generateExplanation: (data) => api.post('/metta/explain/', data),
+  generateExplanation: (data) => publicAPI.post('/metta/explain/', data),
   
   // Health check for MeTTa engine
-  healthCheck: () => api.get('/metta/health/'),
+  healthCheck: () => publicAPI.get('/metta/health/'),
 };
 
-// Gateway (uagents) AI API - Advanced with PDFs
+// Gateway (uagents) AI API - Advanced with PDFs (No auth required)
 export const gatewayAPI = {
   // Submit allocation request with optional PDFs
   requestAllocation: (formData) => {
-    return api.post('/gateway/allocation/request/', formData, {
+    return publicAPI.post('/gateway/allocation/request/', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -158,7 +166,7 @@ export const gatewayAPI = {
   
   // Request AI explanation with optional PDFs
   requestExplanation: (formData) => {
-    return api.post('/gateway/explanation/request/', formData, {
+    return publicAPI.post('/gateway/explanation/request/', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -166,13 +174,13 @@ export const gatewayAPI = {
   },
   
   // Check status of a request (polling)
-  checkStatus: (requestId) => api.get(`/gateway/status/${requestId}/`),
+  checkStatus: (requestId) => publicAPI.get(`/gateway/status/${requestId}/`),
   
   // Check gateway health
-  healthCheck: () => api.get('/gateway/health/'),
+  healthCheck: () => publicAPI.get('/gateway/health/'),
   
   // Get gateway metrics
-  getMetrics: () => api.get('/gateway/metrics/'),
+  getMetrics: () => publicAPI.get('/gateway/metrics/'),
 };
 
 // Legacy XAI API (deprecated - use mettaAPI or gatewayAPI)

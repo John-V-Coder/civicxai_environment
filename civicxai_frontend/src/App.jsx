@@ -33,7 +33,7 @@ function App() {
   }, []);
 
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       {/* Toasters for different notification systems */}
       <Toaster />
       <Sonner position="top-right" expand={true} richColors closeButton theme="dark" />
