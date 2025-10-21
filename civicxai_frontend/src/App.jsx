@@ -24,6 +24,7 @@ import Profile from '@/pages/Profile/Profile';
 // AI Pages
 import AIGateway from '@/components/AIgateway/AIGateway';
 import PriorityCalculator from '@/components/MeTTa/PriorityCalculator';
+import DataSources from '@/pages/DataSources/DataSources';
 
 function App() {
   const { initAuth } = useAuthStore();
@@ -56,6 +57,13 @@ function App() {
           {/* AI Features */}
           <Route path="ai-gateway" element={<AIGateway />} />
           <Route path="calculator" element={<PriorityCalculator />} />
+          
+          {/* Admin Only - Data Sources */}
+          <Route path="data-sources" element={
+            <ProtectedRoute requireAdmin={true}>
+              <DataSources />
+            </ProtectedRoute>
+          } />
           
           <Route path="profile" element={
             <ProtectedRoute>

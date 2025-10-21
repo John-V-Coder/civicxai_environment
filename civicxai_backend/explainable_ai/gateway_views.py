@@ -91,12 +91,38 @@ class GatewayAllocationRequestView(APIView):
                 }, status=status.HTTP_200_OK)
                 
         except httpx.ConnectError as e:
-            return Response({
-                'error': 'Gateway is not running',
-                'detail': f'Cannot connect to uAgents gateway at {GATEWAY_API_URL}',
-                'solution': 'Start the gateway: python run_uagents.py',
-                'gateway_url': GATEWAY_API_URL
-            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            # Fallback to local MeTTa calculation
+            try:
+                from .metta_service import calculate_priority
+                
+                priority_score = calculate_priority(
+                    poverty_index=form_data['poverty_index'],
+                    project_impact=form_data['project_impact'],
+                    environmental_score=form_data['environmental_score'],
+                    corruption_risk=form_data['corruption_risk']
+                )
+                
+                return Response({
+                    'success': True,
+                    'request_id': f"local_{form_data['region_id']}",
+                    'status': 'completed',
+                    'data': {
+                        'priority_score': priority_score,
+                        'recommendation': 'high' if priority_score > 0.7 else 'medium' if priority_score > 0.4 else 'low',
+                        'mode': 'local_metta'
+                    },
+                    'message': 'Gateway unavailable - used local MeTTa calculation',
+                    'warning': f'uAgents Gateway is not running at {GATEWAY_API_URL}. Start it with: python run_uagents.py'
+                }, status=status.HTTP_200_OK)
+                
+            except Exception as fallback_error:
+                return Response({
+                    'error': 'Gateway is not running and local fallback failed',
+                    'detail': f'Cannot connect to uAgents gateway at {GATEWAY_API_URL}',
+                    'solution': 'Start the gateway: python run_uagents.py',
+                    'gateway_url': GATEWAY_API_URL,
+                    'fallback_error': str(fallback_error)
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             
         except httpx.HTTPStatusError as e:
             return Response({

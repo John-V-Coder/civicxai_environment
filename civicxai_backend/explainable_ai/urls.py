@@ -30,6 +30,8 @@ from .gateway_views import (
     GatewayHealthView,
     GatewayMetricsView
 )
+from .chat_views import AIChatView
+from .datasource_views import DataSourceViewSet
 
 # =====================================================
 # DRF Router for ViewSets
@@ -41,6 +43,7 @@ router.register(r'workgroups', WorkgroupViewSet, basename='workgroup')
 router.register(r'proposals', ProposalViewSet, basename='proposal')
 router.register(r'events', EventViewSet, basename='event')
 router.register(r'votes', VoteViewSet, basename='vote')
+router.register(r'data-sources', DataSourceViewSet, basename='datasource')
 
 # =====================================================
 # URL Patterns
@@ -73,6 +76,9 @@ urlpatterns = [
     path('gateway/status/<str:request_id>/', GatewayStatusView.as_view(), name='gateway_status'),
     path('gateway/health/', GatewayHealthView.as_view(), name='gateway_health'),
     path('gateway/metrics/', GatewayMetricsView.as_view(), name='gateway_metrics'),
+
+    # ===== AI Chat =====
+    path('chat/', AIChatView.as_view(), name='ai_chat'),
 
     # ===== Include ViewSet Routers =====
     path('', include(router.urls)),

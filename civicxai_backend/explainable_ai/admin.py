@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
 from .models import (
     User, Region, Allocation, Workgroup, Proposal, 
-    Vote, Event, DashboardMetrics
+    Vote, Event, DashboardMetrics, DataSource
 )
 
 
@@ -246,3 +246,65 @@ class DashboardMetricsAdmin(admin.ModelAdmin):
             DashboardMetrics.calculate_today_metrics()
         self.message_user(request, "Metrics recalculated successfully.")
     recalculate_metrics.short_description = "Recalculate selected metrics"
+
+
+# =====================================================
+# Data Source Admin
+# =====================================================
+
+@admin.register(DataSource)
+class DataSourceAdmin(admin.ModelAdmin):
+    """Admin interface for AI Data Sources"""
+    
+    list_display = [
+        'title', 'source_type', 'category', 'is_active', 
+        'usage_count', 'added_by', 'created_at'
+    ]
+    list_filter = ['source_type', 'category', 'is_active', 'created_at']
+    search_fields = ['title', 'description', 'tags', 'author', 'summary']
+    ordering = ['-created_at']
+    date_hierarchy = 'created_at'
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'description', 'source_type', 'category', 'is_active')
+        }),
+        ('Source Location', {
+            'fields': ('url', 'file')
+        }),
+        ('Metadata', {
+            'fields': ('author', 'published_date', 'tags')
+        }),
+        ('Content Summary', {
+            'fields': ('summary', 'key_points'),
+            'classes': ('collapse',)
+        }),
+        ('Usage Tracking', {
+            'fields': ('usage_count', 'last_used', 'added_by'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    readonly_fields = ['usage_count', 'last_used', 'added_by']
+    
+    actions = ['activate_sources', 'deactivate_sources', 'reset_usage_count']
+    
+    def activate_sources(self, request, queryset):
+        count = queryset.update(is_active=True)
+        self.message_user(request, f"Activated {count} data source(s).")
+    activate_sources.short_description = "Activate selected sources"
+    
+    def deactivate_sources(self, request, queryset):
+        count = queryset.update(is_active=False)
+        self.message_user(request, f"Deactivated {count} data source(s).")
+    deactivate_sources.short_description = "Deactivate selected sources"
+    
+    def reset_usage_count(self, request, queryset):
+        count = queryset.update(usage_count=0, last_used=None)
+        self.message_user(request, f"Reset usage count for {count} source(s).")
+    reset_usage_count.short_description = "Reset usage counters"
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # If creating a new object
+            obj.added_by = request.user
+        super().save_model(request, obj, form, change)

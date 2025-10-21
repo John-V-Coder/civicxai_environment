@@ -19,7 +19,8 @@ import {
   Zap,
   Brain,
   Network,
-  Calculator
+  Calculator,
+  Database
 } from 'lucide-react';
 import useAuthStore from '@/store/authStore';
 
@@ -38,6 +39,7 @@ const Sidebar = () => {
   const aiNavigation = [
     { name: 'AI Gateway', href: '/ai-gateway', icon: Network, badge: 'New' },
     { name: 'Priority Calculator', href: '/calculator', icon: Calculator },
+    { name: 'Data Sources', href: '/data-sources', icon: Database },
   ];
 
   return (
@@ -146,6 +148,11 @@ const Sidebar = () => {
             AI Features
           </p>
           {aiNavigation.map((item) => {
+            // Hide Data Sources from non-admin users
+            if (item.href === '/data-sources' && user?.role !== 'admin') {
+              return null;
+            }
+            
             const Icon = item.icon;
             const isActive = location.pathname === item.href;
             return (

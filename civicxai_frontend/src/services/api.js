@@ -190,4 +190,73 @@ export const xaiAPI = {
   healthCheck: () => api.get('/metta/health/'),
 };
 
+// AI Chat API (No auth required)
+export const chatAPI = {
+  // Send chat message to AI
+  sendMessage: (message, files = null) => {
+    if (files && files.length > 0) {
+      const formData = new FormData();
+      formData.append('message', message);
+      files.forEach(file => {
+        formData.append('files', file);
+      });
+      return publicAPI.post('/chat/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    }
+    return publicAPI.post('/chat/', { message });
+  },
+};
+
+// Data Sources API
+export const dataSourcesAPI = {
+  // List all data sources
+  list: (params) => api.get('/data-sources/', { params }),
+  
+  // Get specific data source
+  get: (id) => api.get(`/data-sources/${id}/`),
+  
+  // Create new data source
+  create: (formData) => {
+    return api.post('/data-sources/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  
+  // Update data source
+  update: (id, formData) => {
+    return api.patch(`/data-sources/${id}/`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  
+  // Delete data source
+  delete: (id) => api.delete(`/data-sources/${id}/`),
+  
+  // Get only active sources
+  getActive: () => api.get('/data-sources/active/'),
+  
+  // Get by category
+  getByCategory: (category) => api.get('/data-sources/by_category/', { params: { category } }),
+  
+  // Get by type
+  getByType: (type) => api.get('/data-sources/by_type/', { params: { type } }),
+  
+  // Search sources
+  search: (query, category = null, type = null) => {
+    return api.get('/data-sources/search_sources/', {
+      params: { q: query, category, type }
+    });
+  },
+  
+  // Get statistics
+  getStats: () => api.get('/data-sources/stats/'),
+};
+
 export default api;

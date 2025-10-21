@@ -390,3 +390,87 @@ class DashboardMetrics(models.Model):
         
         metrics.save()
         return metrics
+
+
+# =====================================================
+# AI Data Sources
+# =====================================================
+
+class DataSource(models.Model):
+    """Store PDFs and website links for AI agent to use as knowledge base"""
+    
+    SOURCE_TYPE_CHOICES = [
+        ('pdf', 'PDF Document'),
+        ('url', 'Website Link'),
+        ('document', 'Text Document'),
+    ]
+    
+    CATEGORY_CHOICES = [
+        ('policy', 'Policy Document'),
+        ('research', 'Research Paper'),
+        ('data', 'Data Source'),
+        ('guideline', 'Guideline'),
+        ('report', 'Report'),
+        ('reference', 'Reference Material'),
+        ('other', 'Other'),
+    ]
+    
+    # Basic Information
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    source_type = models.CharField(max_length=20, choices=SOURCE_TYPE_CHOICES)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='reference')
+    
+    # Source Location
+    url = models.URLField(max_length=500, blank=True, null=True, help_text="URL for websites or online documents")
+    file = models.FileField(upload_to='data_sources/', blank=True, null=True, help_text="Upload PDF or document")
+    
+    # Metadata
+    author = models.CharField(max_length=255, blank=True)
+    published_date = models.DateField(blank=True, null=True)
+    tags = models.CharField(max_length=500, blank=True, help_text="Comma-separated tags")
+    
+    # Content Summary (for quick reference)
+    summary = models.TextField(blank=True, help_text="AI-generated or manual summary of content")
+    key_points = models.TextField(blank=True, help_text="Key takeaways, one per line")
+    
+    # Usage Tracking
+    is_active = models.BooleanField(default=True)
+    usage_count = models.IntegerField(default=0, help_text="Number of times referenced by AI")
+    last_used = models.DateTimeField(blank=True, null=True)
+    
+    # Admin
+    added_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='data_sources_added')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['source_type', 'category']),
+            models.Index(fields=['is_active']),
+        ]
+    
+    def __str__(self):
+        return f"{self.title} ({self.get_source_type_display()})"
+    
+    def increment_usage(self):
+        """Track when this source is used"""
+        self.usage_count += 1
+        self.last_used = timezone.now()
+        self.save(update_fields=['usage_count', 'last_used'])
+    
+    def get_content_preview(self):
+        """Get a preview of the content"""
+        if self.summary:
+            return self.summary[:200] + '...' if len(self.summary) > 200 else self.summary
+        return self.description[:200] + '...' if len(self.description) > 200 else self.description
+    
+    @property
+    def source_location(self):
+        """Return the actual location of the source"""
+        if self.url:
+            return self.url
+        elif self.file:
+            return self.file.url
+        return None

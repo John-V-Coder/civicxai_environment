@@ -19,8 +19,7 @@ import {
   Network,
   Activity
 } from 'lucide-react';
-import { useGateway } from '@/hooks/useGateway';
-import { useMeTTa } from '@/hooks/useMeTTa';
+import { useChat } from '@/hooks/useChat';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -45,20 +44,10 @@ const AIGatewayChat = () => {
   const fileInputRef = useRef(null);
 
   const { 
-    requestAllocation, 
-    requestExplanation, 
-    pollStatus,
-    checkHealth,
-    loading: gatewayLoading 
-  } = useGateway();
-  
-  const { 
-    calculatePriority, 
-    generateExplanation,
-    loading: mettaLoading 
-  } = useMeTTa();
-
-  const loading = gatewayLoading || mettaLoading;
+    sendMessage,
+    loading,
+    error: chatError 
+  } = useChat();
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -73,161 +62,25 @@ const AIGatewayChat = () => {
     }
   }, [messages, isTyping]);
 
-  /**
-   * Detect intent from user message
-   */
-  const detectIntent = (message) => {
-    const lowerMsg = message.toLowerCase();
-    
-    if (lowerMsg.includes('calculate') || lowerMsg.includes('priority') || lowerMsg.includes('score')) {
-      return 'calculate_priority';
-    }
-    if (lowerMsg.includes('explain') || lowerMsg.includes('explanation') || lowerMsg.includes('why')) {
-      return 'explain';
-    }
-    if (lowerMsg.includes('analyze') || lowerMsg.includes('analysis') || lowerMsg.includes('recommendation')) {
-      return 'analyze';
-    }
-    if (lowerMsg.includes('health') || lowerMsg.includes('status') || lowerMsg.includes('check')) {
-      return 'health_check';
-    }
-    
-    return 'general';
-  };
 
   /**
-   * Extract metrics from natural language
-   */
-  const extractMetrics = (message) => {
-    const metrics = {
-      poverty_index: 0.5,
-      project_impact: 0.6,
-      deforestation: 0.4,
-      corruption_risk: 0.3
-    };
-
-    // Simple extraction (can be enhanced with NLP)
-    const povertyMatch = message.match(/poverty.*?(\d+\.?\d*)/i);
-    const impactMatch = message.match(/impact.*?(\d+\.?\d*)/i);
-    const deforestMatch = message.match(/deforest.*?(\d+\.?\d*)/i);
-    const corruptionMatch = message.match(/corruption.*?(\d+\.?\d*)/i);
-
-    if (povertyMatch) metrics.poverty_index = parseFloat(povertyMatch[1]);
-    if (impactMatch) metrics.project_impact = parseFloat(impactMatch[1]);
-    if (deforestMatch) metrics.deforestation = parseFloat(deforestMatch[1]);
-    if (corruptionMatch) metrics.corruption_risk = parseFloat(corruptionMatch[1]);
-
-    return metrics;
-  };
-
-  /**
-   * Process user message and generate AI response
+   * Process user message and get AI response from backend
    */
   const processMessage = async (userMessage) => {
-    const intent = detectIntent(userMessage);
     setIsTyping(true);
 
     try {
-      let botResponse = '';
-
-      switch (intent) {
-        case 'calculate_priority':
-          const metrics = extractMetrics(userMessage);
-          const priorityResult = await calculatePriority(metrics);
-          botResponse = `**Priority Calculation Complete**\n\n` +
-            `**Priority Score:** ${priorityResult.priority_score?.toFixed(2) || 'N/A'}\n` +
-            `**Confidence:** ${(priorityResult.confidence * 100).toFixed(1)}%\n\n` +
-            `**Breakdown:**\n` +
-            `• Poverty Index: ${metrics.poverty_index}\n` +
-            `• Project Impact: ${metrics.project_impact}\n` +
-            `• Deforestation: ${metrics.deforestation}\n` +
-            `• Corruption Risk: ${metrics.corruption_risk}\n\n` +
-            `${priorityResult.explanation || 'This score indicates the priority level for resource allocation.'}`;
-          break;
-
-        case 'analyze':
-          const analysisMetrics = extractMetrics(userMessage);
-          
-          try {
-            // Try Gateway first
-            const data = {
-              region_id: `CHAT_${Date.now()}`,
-              ...analysisMetrics
-            };
-            
-            const analysisResponse = await requestAllocation(data, files);
-            toast.success('Analysis submitted to AI Gateway');
-            
-            const finalResult = await pollStatus(analysisResponse.request_id, {
-              maxAttempts: 20,
-              interval: 2000
-            });
-
-            botResponse = `AI Analysis Complete\n\n` +
-              `Priority Level: ${finalResult.recommendation?.priority_level || 'Medium'}\n` +
-              `Confidence: ${((finalResult.recommendation?.confidence_score || 0.7) * 100).toFixed(1)}%\n` +
-              `Recommended Allocation: ${finalResult.recommendation?.recommended_allocation_percentage || 0}%\n\n`;
-            
-            if (finalResult.recommendation?.key_findings) {
-              botResponse += `Key Findings:\n`;
-              finalResult.recommendation.key_findings.forEach(finding => {
-                botResponse += `• ${finding}\n`;
-              });
-            }
-          } catch (gatewayError) {
-            // Fallback to MeTTa on Gateway failure
-            console.warn('Gateway failed, falling back to MeTTa:', gatewayError);
-            const mettaResult = await calculatePriority(analysisMetrics);
-            
-            botResponse = `Analysis Complete (Using MeTTa Engine)\n\n` +
-              `Priority Score: ${mettaResult.priority_score?.toFixed(2) || 'N/A'}\n` +
-              `Confidence: ${(mettaResult.confidence * 100).toFixed(1)}%\n\n` +
-              `Note: Gateway unavailable, used local MeTTa engine for basic calculation.\n\n` +
-              `Metrics analyzed:\n` +
-              `• Poverty Index: ${analysisMetrics.poverty_index}\n` +
-              `• Project Impact: ${analysisMetrics.project_impact}\n` +
-              `• Deforestation: ${analysisMetrics.deforestation}\n` +
-              `• Corruption Risk: ${analysisMetrics.corruption_risk}`;
-          }
-          break;
-
-        case 'explain':
-          const explanationData = {
-            region_id: `CHAT_${Date.now()}`,
-            allocation_data: extractMetrics(userMessage),
-            context: userMessage,
-            language: 'en'
-          };
-          
-          const explainResult = await generateExplanation(explanationData);
-          botResponse = `**Explanation Generated**\n\n${explainResult.explanation || explainResult.summary || 'Here is the explanation for the allocation decision based on the provided data.'}`;
-          break;
-
-        case 'health_check':
-          const health = await checkHealth();
-          botResponse = `**System Health Check**\n\n` +
-            `Gateway Status: ${health.gateway_status || health.status || 'Unknown'}\n` +
-            `Agent Active: ${health.agent_active ? 'Yes' : ' No'}\n\n` +
-            `All systems are ${health.gateway_status === 'healthy' || health.status === 'healthy' ? 'operational' : 'experiencing issues'}.`;
-          break;
-
-        default:
-          botResponse = `I understand you're asking about: "${userMessage}"\n\n` +
-            `To help you better, please be more specific. You can ask me to:\n\n` +
-            `• **Calculate priority** - e.g., "Calculate priority for poverty 0.8, impact 0.9"\n` +
-            `• **Analyze allocation** - e.g., "Analyze this region with high poverty"\n` +
-            `• **Explain decision** - e.g., "Explain why this region got high priority"\n` +
-            `• **Check health** - e.g., "Check system status"\n\n` +
-            `You can also upload PDFs for more detailed analysis!`;
-      }
-
+      // Send message to backend with files
+      const response = await sendMessage(userMessage, files.length > 0 ? files : null);
+      
       // Add bot response to messages
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         type: 'bot',
-        content: botResponse,
+        content: response.content,
         timestamp: new Date(),
-        data: intent !== 'general' ? { intent } : undefined
+        isError: response.isError || false,
+        data: response.intent ? { intent: response.intent } : undefined
       }]);
 
       // Clear files after processing
@@ -236,28 +89,15 @@ const AIGatewayChat = () => {
     } catch (error) {
       console.error('Error processing message:', error);
       
-      let errorMessage = '';
-      
-      if (error.response?.status === 503) {
-        errorMessage = 'AI Gateway Offline\n\nThe AI Gateway is not currently running. Please start the gateway server or I can use the local MeTTa engine for basic calculations.';
-      } else if (error.response?.status === 500) {
-        const backendError = error.response?.data?.error || error.response?.data?.detail || 'Internal server error';
-        errorMessage = `Backend Error (500)\n\n${backendError}\n\nPlease check that:\n• Django backend is running on port 8000\n• Gateway service is properly configured\n• All required dependencies are installed`;
-      } else if (error.response?.status === 404) {
-        errorMessage = 'Endpoint Not Found\n\nThe requested API endpoint does not exist. Please check your backend configuration.';
-      } else {
-        errorMessage = `Error: ${error.message || 'Failed to process your request. Please try again.'}\n\nStatus: ${error.response?.status || 'Unknown'}`;
-      }
-      
+      // Error is already handled by useChat hook
+      // Just display a generic error message
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         type: 'bot',
-        content: errorMessage,
+        content: 'Sorry, I encountered an error processing your request. Please try again.',
         timestamp: new Date(),
         isError: true
       }]);
-      
-      toast.error('Failed to process request');
     } finally {
       setIsTyping(false);
     }

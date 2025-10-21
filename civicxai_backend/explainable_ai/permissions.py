@@ -45,3 +45,22 @@ class IsContributorOrReadOnly(permissions.BasePermission):
         return request.user and request.user.is_authenticated and (
             request.user.role in ['contributor', 'admin'] or request.user.is_superuser
         )
+
+
+class IsAdminOnly(permissions.BasePermission):
+    """
+    Custom permission to only allow admins full access.
+    Non-admins and unauthenticated users are completely denied.
+    """
+    
+    def has_permission(self, request, view):
+        # Only admins can access
+        return request.user and request.user.is_authenticated and (
+            request.user.role == 'admin' or request.user.is_superuser
+        )
+    
+    def has_object_permission(self, request, view, obj):
+        # Only admins can access objects
+        return request.user and request.user.is_authenticated and (
+            request.user.role == 'admin' or request.user.is_superuser
+        )

@@ -3,7 +3,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from .models import (
     User, Region, Allocation, Workgroup, Proposal, 
-    Vote, Event, DashboardMetrics
+    Vote, Event, DashboardMetrics, DataSource
 )
 
 User = get_user_model()
@@ -324,3 +324,60 @@ class DashboardSummarySerializer(serializers.Serializer):
     financials = serializers.DictField()
     recent_events = EventListSerializer(many=True)
     active_contributors = UserListSerializer(many=True)
+
+
+# =====================================================
+# Data Source Serializers
+# =====================================================
+
+class DataSourceSerializer(serializers.ModelSerializer):
+    """Full data source serializer"""
+    
+    added_by_username = serializers.CharField(source='added_by.username', read_only=True)
+    source_location = serializers.ReadOnlyField()
+    content_preview = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = DataSource
+        fields = [
+            'id', 'title', 'description', 'source_type', 'category',
+            'url', 'file', 'author', 'published_date', 'tags',
+            'summary', 'key_points', 'is_active', 'usage_count',
+            'last_used', 'added_by', 'added_by_username', 'created_at',
+            'updated_at', 'source_location', 'content_preview'
+        ]
+        read_only_fields = ['usage_count', 'last_used', 'created_at', 'updated_at']
+    
+    def get_content_preview(self, obj):
+        return obj.get_content_preview()
+
+
+class DataSourceListSerializer(serializers.ModelSerializer):
+    """Lightweight list serializer"""
+    
+    source_location = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = DataSource
+        fields = [
+            'id', 'title', 'source_type', 'category', 'is_active',
+            'usage_count', 'created_at', 'source_location'
+        ]
+
+
+class DataSourceCreateSerializer(serializers.ModelSerializer):
+    """Create/Update serializer"""
+    
+    class Meta:
+        model = DataSource
+        fields = [
+            'title', 'description', 'source_type', 'category',
+            'url', 'file', 'author', 'published_date', 'tags',
+            'summary', 'key_points', 'is_active'
+        ]
+    
+    def validate(self, data):
+        """Ensure either URL or file is provided"""
+        if not data.get('url') and not data.get('file'):
+            raise serializers.ValidationError("Either URL or file must be provided")
+        return data
