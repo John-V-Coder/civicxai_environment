@@ -17,6 +17,7 @@ load_dotenv()
 
 # Gateway configuration
 UAGENTS_GATEWAY_URL = os.getenv("UAGENTS_GATEWAY_URL")
+GATEWAY_API_URL = UAGENTS_GATEWAY_URL  # Alias for consistent usage
 
 
 class GatewayAllocationRequestView(APIView):

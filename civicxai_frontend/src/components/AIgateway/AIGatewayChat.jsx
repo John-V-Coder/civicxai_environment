@@ -134,9 +134,9 @@ const AIGatewayChat = () => {
         case 'calculate_priority':
           const metrics = extractMetrics(userMessage);
           const priorityResult = await calculatePriority(metrics);
-          botResponse = `✅ **Priority Calculation Complete**\n\n` +
-            `📊 **Priority Score:** ${priorityResult.priority_score?.toFixed(2) || 'N/A'}\n` +
-            `📈 **Confidence:** ${(priorityResult.confidence * 100).toFixed(1)}%\n\n` +
+          botResponse = `**Priority Calculation Complete**\n\n` +
+            `**Priority Score:** ${priorityResult.priority_score?.toFixed(2) || 'N/A'}\n` +
+            `**Confidence:** ${(priorityResult.confidence * 100).toFixed(1)}%\n\n` +
             `**Breakdown:**\n` +
             `• Poverty Index: ${metrics.poverty_index}\n` +
             `• Project Impact: ${metrics.project_impact}\n` +
@@ -200,14 +200,14 @@ const AIGatewayChat = () => {
           };
           
           const explainResult = await generateExplanation(explanationData);
-          botResponse = `📝 **Explanation Generated**\n\n${explainResult.explanation || explainResult.summary || 'Here is the explanation for the allocation decision based on the provided data.'}`;
+          botResponse = `**Explanation Generated**\n\n${explainResult.explanation || explainResult.summary || 'Here is the explanation for the allocation decision based on the provided data.'}`;
           break;
 
         case 'health_check':
           const health = await checkHealth();
-          botResponse = `🏥 **System Health Check**\n\n` +
+          botResponse = `**System Health Check**\n\n` +
             `Gateway Status: ${health.gateway_status || health.status || 'Unknown'}\n` +
-            `Agent Active: ${health.agent_active ? '✅ Yes' : '❌ No'}\n\n` +
+            `Agent Active: ${health.agent_active ? 'Yes' : ' No'}\n\n` +
             `All systems are ${health.gateway_status === 'healthy' || health.status === 'healthy' ? 'operational' : 'experiencing issues'}.`;
           break;
 
@@ -315,7 +315,7 @@ const AIGatewayChat = () => {
   };
 
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100vh - 12rem)' }}>
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 8rem)' }}>
       <Card className="flex-1 bg-slate-900 border-slate-800 flex flex-col" style={{ minHeight: 0 }}>
         {/* Chat Header */}
         <CardHeader className="border-b border-slate-800 pb-4">
@@ -375,9 +375,9 @@ const AIGatewayChat = () => {
                   </Avatar>
 
                   {/* Message Content */}
-                  <div className={`flex-1 max-w-[80%] ${message.type === 'user' ? 'text-right' : 'text-left'}`}>
+                  <div className={`flex-1 max-w-[85%] ${message.type === 'user' ? 'text-right' : 'text-left'}`}>
                     <div
-                      className={`inline-block p-3 rounded-lg ${
+                      className={`inline-block p-4 rounded-lg ${
                         message.type === 'user'
                           ? 'bg-violet-600 text-white'
                           : message.isError
@@ -438,27 +438,57 @@ const AIGatewayChat = () => {
         {/* Input Area */}
         <div className="border-t border-slate-800">
           <CardContent className="p-4">
-          {/* File Preview */}
+          {/* File Preview - Enhanced */}
           {files.length > 0 && (
-            <div className="mb-3 flex flex-wrap gap-2">
-              {files.map((file, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="bg-slate-800 text-slate-300 pr-1"
+            <div className="mb-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Attached Files ({files.length})
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFiles([])}
+                  className="text-xs text-slate-400 hover:text-white h-6"
                 >
-                  <FileText className="h-3 w-3 mr-1" />
-                  {file.name}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-4 w-4 ml-1"
-                    onClick={() => removeFile(index)}
+                  Clear All
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {files.map((file, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="flex items-center justify-between p-2 bg-slate-900 rounded-md border border-slate-700 hover:border-slate-600 transition-colors"
                   >
-                    ×
-                  </Button>
-                </Badge>
-              ))}
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="p-2 rounded bg-blue-500/20">
+                        <FileText className="h-4 w-4 text-blue-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-200 truncate">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {(file.size / 1024).toFixed(2)} KB
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeFile(index)}
+                      className="h-8 w-8 text-slate-400 hover:text-red-400 hover:bg-red-500/10 flex-shrink-0"
+                      title="Remove file"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -476,7 +506,8 @@ const AIGatewayChat = () => {
               variant="outline"
               size="icon"
               onClick={() => fileInputRef.current?.click()}
-              className="bg-slate-800 border-slate-700 hover:bg-slate-700"
+              className="bg-slate-800 border-slate-700 hover:bg-slate-700 hover:border-blue-500 transition-colors"
+              title="Upload files"
             >
               <Upload className="h-4 w-4" />
             </Button>
