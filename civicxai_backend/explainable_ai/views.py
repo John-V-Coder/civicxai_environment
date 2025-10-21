@@ -5,7 +5,7 @@ from rest_framework import viewsets, status, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from .models import Region, Allocation, Workgroup, Proposal, Vote, Event
 from .serializers import (
@@ -28,7 +28,7 @@ User = get_user_model()
 
 class CalculatePriorityView(APIView):
     """Calculate priority using MeTTa engine"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         try:
@@ -63,7 +63,7 @@ class CalculatePriorityView(APIView):
 
 class HealthCheckView(APIView):
     """Check if MeTTa engine is working"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         try:
@@ -75,7 +75,7 @@ class HealthCheckView(APIView):
 
 class GenerateExplanationAPIView(APIView):
     """Generate explanations using ASIExplainAgent"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         region_id = request.data.get('region_id')

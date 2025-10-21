@@ -1,7 +1,7 @@
 import os
-# CRITICAL: Set environment variables BEFORE importing uagents
-os.environ["ALMANAC_API_DISABLED"] = "1"
-os.environ["ALMANAC_DISABLED"] = "true"
+# Enable Almanac registration for ASI network integration
+# The agent will automatically request testnet tokens and register
+# To disable registration, set ALMANAC_API_DISABLED=1 in .env file
 
 import asyncio
 import json
@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 
 # Import uagents with minimal configuration
 from uagents import Agent, Context, Protocol, Model
-from uagents.setup import fund_agent_if_low
 
 import anthropic
 
@@ -26,8 +25,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger("CivicXAI_Provider")
 
+# Keep registration logs visible for monitoring
+# logging.getLogger("uagents.registration").setLevel(logging.ERROR)  # Commented out to see registration status
+
 # Configuration
 PROVIDER_AGENT_PORT = int(os.getenv("PROVIDER_AGENT_PORT", 8002))
+AI_PROVIDER_AGENT_SEED = os.getenv("AI_PROVIDER_AGENT_SEED", "civic_xai_provider_seed_12345")  # Consistent seed for same address
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 CHAT_MODEL = os.getenv("CHAT_MODEL", "claude-3-sonnet-20240229")
@@ -193,18 +196,17 @@ class AIProcessor:
 # Agent Setup
 # =====================================================
 def create_agent():
-    """Create the provider agent with minimal configuration."""
+    """Create the provider agent with Almanac registration enabled."""
     try:
-        # Create agent without seed to generate new address
+        # Create agent with seed for consistent address
+        # Will automatically register on Almanac and request testnet funds
         agent = Agent(
             name="CivicXAI_Provider",
+            seed=AI_PROVIDER_AGENT_SEED,
             port=PROVIDER_AGENT_PORT,
-            endpoint=[f"http://localhost:{PROVIDER_AGENT_PORT}"],
-            mailbox=None  # No mailbox for now to avoid registration issues
+            endpoint=[f"http://localhost:{PROVIDER_AGENT_PORT}"]
+            # mailbox parameter can be added later for AgentVerse integration
         )
-        
-        logger.info(f"Agent created with address: {agent.address}")
-        logger.info(f"Running on port: {PROVIDER_AGENT_PORT}")
         
         return agent
     except Exception as e:
@@ -314,7 +316,7 @@ async def log_statistics(ctx: Context):
 async def main():
     """Main application entry point."""
     logger.info("=" * 60)
-    logger.info(" Starting CivicXAI Provider Agent (Simplified)")
+    logger.info(" Starting CivicXAI Provider Agent")
     logger.info("=" * 60)
     
     # Create agent
@@ -323,10 +325,35 @@ async def main():
     # Include protocol
     agent.include(provider_protocol, publish_manifest=False)
     
-    # Run agent
-    logger.info("Agent running...")
-    logger.info(f" Access at: http://localhost:{PROVIDER_AGENT_PORT}")
-    logger.info("Running without Almanac registration (local mode)")
+    # Log detailed agent information
+    logger.info(f"Agent created with address: {agent.address}")
+    
+    # Create agent inspector URL
+    import urllib.parse
+    endpoint_encoded = urllib.parse.quote(f"http://127.0.0.1:{PROVIDER_AGENT_PORT}", safe='')
+    inspector_url = f"https://agentverse.ai/inspect/?uri={endpoint_encoded}&address={agent.address}"
+    logger.info(f"Agent inspector available at {inspector_url}")
+    
+    # Log server information
+    logger.info(f"Starting server on http://0.0.0.0:{PROVIDER_AGENT_PORT} (Press CTRL+C to quit)")
+    
+    # Get ASI network address (Fetch wallet address)
+    try:
+        wallet_address = agent.wallet.address()
+        logger.info(f"ASI network address: {wallet_address}")
+        
+        # Try to get balance
+        try:
+            balance = agent.wallet.balance()
+            logger.info(f"Balance of addr: {balance}")
+        except Exception as e:
+            logger.info(f"Balance of addr: [Not yet available - will update after registration]")
+    except Exception as e:
+        logger.warning(f"Could not retrieve wallet info: {e}")
+    
+    logger.info(" Almanac registration enabled - testnet tokens will be requested automatically")
+    logger.info(" View your agent at: https://agentverse.ai")
+    logger.info("=" * 60)
     
     await agent.run_async()
 

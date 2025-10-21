@@ -2,18 +2,21 @@
 Gateway Integration Views
 Handles communication with uagents gateway API for AI-powered allocation analysis
 """
+import os
 import httpx
 import json
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.conf import settings
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 # Gateway configuration
-GATEWAY_API_URL = getattr(settings, 'UAGENTS_GATEWAY_URL', 'http://localhost:8080')
+UAGENTS_GATEWAY_URL = os.getenv("UAGENTS_GATEWAY_URL")
 
 
 class GatewayAllocationRequestView(APIView):
@@ -21,7 +24,7 @@ class GatewayAllocationRequestView(APIView):
     Send allocation request to uagents gateway with optional PDF/file uploads
     POST /api/gateway/allocation/request/
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     parser_classes = [MultiPartParser, FormParser]
     
     def post(self, request):
@@ -86,6 +89,14 @@ class GatewayAllocationRequestView(APIView):
                     'message': 'Allocation request submitted to gateway'
                 }, status=status.HTTP_200_OK)
                 
+        except httpx.ConnectError as e:
+            return Response({
+                'error': 'Gateway is not running',
+                'detail': f'Cannot connect to uAgents gateway at {GATEWAY_API_URL}',
+                'solution': 'Start the gateway: python run_uagents.py',
+                'gateway_url': GATEWAY_API_URL
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
         except httpx.HTTPStatusError as e:
             return Response({
                 'error': 'Gateway request failed',
@@ -94,9 +105,14 @@ class GatewayAllocationRequestView(APIView):
             }, status=status.HTTP_502_BAD_GATEWAY)
             
         except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"ERROR in GatewayAllocationRequestView: {error_details}")
             return Response({
                 'error': 'Failed to submit allocation request',
-                'details': str(e)
+                'details': str(e),
+                'type': type(e).__name__,
+                'traceback': error_details if status.HTTP_500_INTERNAL_SERVER_ERROR else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -105,7 +121,7 @@ class GatewayExplanationRequestView(APIView):
     Request explanation from uagents gateway
     POST /api/gateway/explanation/request/
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     parser_classes = [MultiPartParser, FormParser]
     
     def post(self, request):
@@ -168,6 +184,14 @@ class GatewayExplanationRequestView(APIView):
                     'message': 'Explanation request submitted to gateway'
                 }, status=status.HTTP_200_OK)
                 
+        except httpx.ConnectError as e:
+            return Response({
+                'error': 'Gateway is not running',
+                'detail': f'Cannot connect to uAgents gateway at {GATEWAY_API_URL}',
+                'solution': 'Start the gateway: python run_uagents.py',
+                'gateway_url': GATEWAY_API_URL
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
         except httpx.HTTPStatusError as e:
             return Response({
                 'error': 'Gateway request failed',
@@ -187,7 +211,7 @@ class GatewayStatusView(APIView):
     Check status of a gateway request
     GET /api/gateway/status/<request_id>/
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     def get(self, request, request_id):
         """Poll gateway for request status and results"""
@@ -229,7 +253,7 @@ class GatewayHealthView(APIView):
     Check gateway health status
     GET /api/gateway/health/
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     def get(self, request):
         """Check if gateway is healthy and operational"""
@@ -261,7 +285,7 @@ class GatewayMetricsView(APIView):
     Get gateway metrics and statistics
     GET /api/gateway/metrics/
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     def get(self, request):
         """Retrieve gateway performance metrics"""

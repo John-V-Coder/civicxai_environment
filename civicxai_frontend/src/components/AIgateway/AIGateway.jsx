@@ -103,6 +103,15 @@ const AIGateway = () => {
       toast.success('AI analysis completed!');
     } catch (err) {
       console.error('Allocation request error:', err);
+      
+      // Handle gateway not running
+      if (err.response?.status === 503) {
+        toast.error('AI Gateway is not running. Please start the gateway server or use the MeTTa Calculator instead.', {
+          duration: 5000
+        });
+        return;
+      }
+      
       const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message || 'Failed to complete AI analysis';
       toast.error(errorMessage);
     }
@@ -142,6 +151,15 @@ const AIGateway = () => {
       toast.success('Explanation generated!');
     } catch (err) {
       console.error('Explanation request error:', err);
+      
+      // Handle gateway not running
+      if (err.response?.status === 503) {
+        toast.error('AI Gateway is not running. Please start the gateway server or use the MeTTa Calculator instead.', {
+          duration: 5000
+        });
+        return;
+      }
+      
       const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message || 'Failed to generate explanation';
       toast.error(errorMessage);
     }

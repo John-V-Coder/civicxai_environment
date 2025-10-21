@@ -11,6 +11,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -77,11 +81,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'civicxai_backend.wsgi.application'
 
 # CORS settings (for React frontend)
+# --- CORS Settings ---
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React dev server
-    "http://localhost:5173",  # Vite dev server (if using Vite)
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
 ]
-
 CORS_ALLOW_CREDENTIALS = True
 
 # REST Framework settings
@@ -197,4 +202,9 @@ SIMPLE_JWT = {
 # =====================================================
 # uAgents Gateway Configuration
 # =====================================================
-UAGENTS_GATEWAY_URL = 'http://localhost:8080'
+
+# --- uAgents Gateway ---
+UAGENTS_GATEWAY_URL = os.getenv("UAGENTS_GATEWAY_URL", "http://127.0.0.1:8003")
+
+# --- AI Provider Agent ---
+AI_PROVIDER_AGENT_ENDPOINT = os.getenv("AI_PROVIDER_AGENT_ENDPOINT", "http://127.0.0.1:8002/submit")

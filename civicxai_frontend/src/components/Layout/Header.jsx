@@ -25,6 +25,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import useAuthStore from '@/store/authStore';
+import WalletConnect from '@/components/WalletConnect/WalletConnect';
 
 const Header = ({ onMenuClick }) => {
   const { user, logout } = useAuthStore();
@@ -92,6 +93,9 @@ const Header = ({ onMenuClick }) => {
         >
           <Settings className="h-5 w-5" />
         </Button>
+
+        {/* Wallet Connect */}
+        <WalletConnect />
 
         {/* User Menu - Only show when logged in */}
         {user && (
