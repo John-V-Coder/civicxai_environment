@@ -11,13 +11,15 @@ import {
   Users,
   Briefcase,
   BarChart3,
-  Settings,
   LogOut,
   ChevronRight,
   Activity,
   Target,
   Globe,
-  Zap
+  Zap,
+  Brain,
+  Network,
+  Calculator
 } from 'lucide-react';
 import useAuthStore from '@/store/authStore';
 
@@ -33,8 +35,9 @@ const Sidebar = () => {
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   ];
 
-  const bottomNav = [
-    { name: 'Settings', href: '/settings', icon: Settings },
+  const aiNavigation = [
+    { name: 'AI Gateway', href: '/ai-gateway', icon: Network, badge: 'New' },
+    { name: 'Priority Calculator', href: '/calculator', icon: Calculator },
   ];
 
   return (
@@ -106,7 +109,7 @@ const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 px-2 py-4">
+      <ScrollArea className="flex-1 px-2 py-3">
         <div className="space-y-1">
           <p className="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
             Navigation
@@ -136,29 +139,65 @@ const Sidebar = () => {
           })}
         </div>
 
+        {/* AI Features */}
+        <div className="mt-4 space-y-1">
+          <p className="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-2">
+            <Brain className="h-3 w-3" />
+            AI Features
+          </p>
+          {aiNavigation.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.href;
+            return (
+              <Link key={item.name} to={item.href}>
+                <Button
+                  variant={isActive ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start gap-3",
+                    isActive 
+                      ? "bg-blue-600/20 text-blue-400 hover:bg-blue-600/30" 
+                      : "text-slate-300 hover:text-white hover:bg-slate-800/50"
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.name}
+                  {item.badge && (
+                    <Badge className="ml-auto bg-blue-600 text-white text-xs">
+                      {item.badge}
+                    </Badge>
+                  )}
+                  {!item.badge && isActive && (
+                    <ChevronRight className="ml-auto h-4 w-4" />
+                  )}
+                </Button>
+              </Link>
+            );
+          })}
+        </div>
+
         {/* Quick Stats */}
-        <div className="mt-6 space-y-3 px-3">
+        <div className="mt-4 space-y-2 px-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
             Quick Stats
           </p>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between rounded-lg bg-slate-800/50 px-3 py-2">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between rounded-lg bg-slate-800/50 px-2.5 py-1.5">
               <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4 text-green-400" />
+                <Activity className="h-3.5 w-3.5 text-green-400" />
                 <span className="text-xs text-slate-300">Active Proposals</span>
               </div>
               <span className="text-xs font-semibold text-white">21</span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-slate-800/50 px-3 py-2">
+            <div className="flex items-center justify-between rounded-lg bg-slate-800/50 px-2.5 py-1.5">
               <div className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-blue-400" />
+                <Target className="h-3.5 w-3.5 text-blue-400" />
                 <span className="text-xs text-slate-300">Pending Votes</span>
               </div>
               <span className="text-xs font-semibold text-white">3</span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-slate-800/50 px-3 py-2">
+            <div className="flex items-center justify-between rounded-lg bg-slate-800/50 px-2.5 py-1.5">
               <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-violet-400" />
+                <Globe className="h-3.5 w-3.5 text-violet-400" />
                 <span className="text-xs text-slate-300">Online Members</span>
               </div>
               <span className="text-xs font-semibold text-white">61</span>
@@ -169,35 +208,6 @@ const Sidebar = () => {
 
       {/* Bottom Section */}
       <div className="border-t border-slate-800 p-2">
-        {bottomNav.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link key={item.name} to={item.href}>
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 text-slate-300 hover:text-white hover:bg-slate-800/50"
-              >
-                <Icon className="h-5 w-5" />
-                {item.name}
-              </Button>
-            </Link>
-          );
-        })}
-        
-        {/* AGIX Price */}
-        <div className="mx-3 my-3 rounded-lg bg-gradient-to-r from-violet-600/20 to-indigo-600/20 p-3 border border-violet-600/30">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400">AGIX Price</span>
-            <span className="text-sm font-bold text-white">$0.28</span>
-          </div>
-          <div className="mt-1 flex items-center gap-1">
-            <div className="h-1.5 flex-1 rounded-full bg-slate-700">
-              <div className="h-full w-3/4 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600" />
-            </div>
-            <span className="text-xs text-green-400">+5.2%</span>
-          </div>
-        </div>
-
         {/* Sign Out - Only show when authenticated */}
         {user && (
           <Button

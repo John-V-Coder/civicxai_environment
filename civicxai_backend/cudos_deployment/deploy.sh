@@ -17,7 +17,7 @@ command -v docker-compose >/dev/null 2>&1 || { echo "Docker Compose is required 
 if [ ! -f .env ]; then
     echo "Creating .env from .env.example..."
     cp .env.example .env
-    echo "⚠️  Please edit .env with your configuration before continuing!"
+    echo "Please edit .env with your configuration before continuing!"
     exit 1
 fi
 
@@ -43,7 +43,7 @@ sleep 10
 
 # Check health
 echo "Checking service health..."
-curl -f http://localhost:8080/health || echo "⚠️  Gateway health check failed"
+curl -f http://localhost:8080/health || echo " Gateway health check failed"
 
 # Display status
 echo ""

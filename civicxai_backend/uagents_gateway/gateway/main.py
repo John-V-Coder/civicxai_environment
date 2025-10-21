@@ -81,7 +81,7 @@ content_cache = TTLCache(maxsize=100, ttl=3600)
 url_cache = TTLCache(maxsize=50, ttl=1800)
 
 # =====================================================
-# 📊 Mathematical Models & Algorithms
+# Mathematical Models & Algorithms
 # =====================================================
 class AllocationOptimizer:
     """
@@ -209,7 +209,7 @@ class AllocationOptimizer:
         return allocations
 
 # =====================================================
-# 📊 Pydantic Models
+# Pydantic Models
 # =====================================================
 class AllocationRequestInput(BaseModel):
     region_id: str
@@ -243,7 +243,7 @@ class RequestStatusResponse(BaseModel):
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
 
 # =====================================================
-# 🔧 Content Processing Pipeline
+# Content Processing Pipeline
 # =====================================================
 class ContentProcessor:
     """Unified content processing pipeline with caching and optimization."""
@@ -448,7 +448,7 @@ class ContentProcessor:
             }
 
 # =====================================================
-# 🤖 Gateway Agent Setup
+# Gateway Agent Setup
 # =====================================================
 gateway_agent: Optional[Agent] = None
 gateway_protocol: Optional[Protocol] = None
@@ -495,7 +495,7 @@ async def lifespan(app: FastAPI):
     logger.info("🛑 Shutting down gateway...")
 
 # =====================================================
-# 🖥️ FastAPI Application
+# FastAPI Application
 # =====================================================
 app = FastAPI(
     title="CivicXAI Gateway API",
@@ -513,7 +513,7 @@ app.add_middleware(
 )
 
 # =====================================================
-# ⚡ API Endpoints
+#  API Endpoints
 # =====================================================
 @app.get("/")
 async def root():
@@ -754,7 +754,7 @@ async def clear_cache():
     return {"message": "Caches cleared successfully"}
 
 # =====================================================
-# 🚀 Application Entry Point
+# Application Entry Point
 # =====================================================
 if __name__ == "__main__":
     uvicorn.run(

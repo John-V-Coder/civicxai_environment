@@ -23,9 +23,16 @@ from .auth_views import (
     DashboardOverviewView,
     check_auth_status
 )
+from .gateway_views import (
+    GatewayAllocationRequestView,
+    GatewayExplanationRequestView,
+    GatewayStatusView,
+    GatewayHealthView,
+    GatewayMetricsView
+)
 
 # =====================================================
-# 🔹 DRF Router for ViewSets
+# DRF Router for ViewSets
 # =====================================================
 router = DefaultRouter()
 router.register(r'regions', RegionViewSet, basename='region')
@@ -36,7 +43,7 @@ router.register(r'events', EventViewSet, basename='event')
 router.register(r'votes', VoteViewSet, basename='vote')
 
 # =====================================================
-# 🔹 URL Patterns
+# URL Patterns
 # =====================================================
 urlpatterns = [
     # ===== Authentication =====
@@ -59,6 +66,13 @@ urlpatterns = [
     path('metta/calculate-priority/', CalculatePriorityView.as_view(), name='calculate-priority'),
     path('metta/health/', HealthCheckView.as_view(), name='health-check'),
     path('metta/explain/', GenerateExplanationAPIView.as_view(), name='generate_explanation'),
+
+    # ===== uAgents Gateway Integration =====
+    path('gateway/allocation/request/', GatewayAllocationRequestView.as_view(), name='gateway_allocation_request'),
+    path('gateway/explanation/request/', GatewayExplanationRequestView.as_view(), name='gateway_explanation_request'),
+    path('gateway/status/<str:request_id>/', GatewayStatusView.as_view(), name='gateway_status'),
+    path('gateway/health/', GatewayHealthView.as_view(), name='gateway_health'),
+    path('gateway/metrics/', GatewayMetricsView.as_view(), name='gateway_metrics'),
 
     # ===== Include ViewSet Routers =====
     path('', include(router.urls)),

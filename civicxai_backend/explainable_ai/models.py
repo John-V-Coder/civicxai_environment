@@ -7,7 +7,7 @@ import uuid
 
 
 # =====================================================
-# 🔐 Authentication & User Management
+# Authentication & User Management
 # =====================================================
 
 class User(AbstractUser):
@@ -58,7 +58,7 @@ class User(AbstractUser):
 
 
 # =====================================================
-# 🌍 Regional Data & Allocation Models
+# Regional Data & Allocation Models
 # =====================================================
 
 class Region(models.Model):
@@ -163,7 +163,7 @@ class Allocation(models.Model):
 
 
 # =====================================================
-# 👥 Workgroups & Governance
+# Workgroups & Governance
 # =====================================================
 
 class Workgroup(models.Model):
@@ -212,7 +212,7 @@ class Workgroup(models.Model):
 
 
 # =====================================================
-# 📋 Proposals & Voting
+# Proposals & Voting
 # =====================================================
 
 class Proposal(models.Model):
@@ -297,7 +297,7 @@ class Vote(models.Model):
 
 
 # =====================================================
-# 📅 Events & Calendar
+# Events & Calendar
 # =====================================================
 
 class Event(models.Model):
@@ -332,7 +332,7 @@ class Event(models.Model):
 
 
 # =====================================================
-# 📊 Analytics & Metrics
+# Analytics & Metrics
 # =====================================================
 
 class DashboardMetrics(models.Model):

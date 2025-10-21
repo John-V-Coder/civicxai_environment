@@ -19,7 +19,7 @@ User = get_user_model()
 
 
 # =====================================================
-# 🔐 Authentication Views
+# Authentication Views
 # =====================================================
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -147,7 +147,7 @@ class ChangePasswordView(APIView):
 
 
 # =====================================================
-# 👤 User Management Views
+#  User Management Views
 # =====================================================
 
 from .serializers import (
@@ -224,7 +224,7 @@ class UpdateUserRoleView(APIView):
 
 
 # =====================================================
-# 📊 Dashboard Views
+# Dashboard Views
 # =====================================================
 
 class DashboardOverviewView(APIView):

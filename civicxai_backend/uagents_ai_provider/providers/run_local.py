@@ -16,11 +16,11 @@ os.environ["NO_ALMANAC_REGISTRATION"] = "true"
 # os.environ["ANTHROPIC_API_KEY"] = "your-key-here"
 
 print("=" * 60)
-print("🚀 Starting CivicXAI Provider Agent (Local Mode)")
+print("Starting CivicXAI Provider Agent (Local Mode)")
 print("=" * 60)
 print()
 print("Configuration:")
-print("  - Almanac: DISABLED ✅")
+print("  - Almanac: DISABLED ")
 print("  - Mode: LOCAL ONLY")
 print("  - Port: 8002")
 print()
@@ -31,9 +31,9 @@ try:
     import asyncio
     asyncio.run(main())
 except KeyboardInterrupt:
-    print("\n👋 Agent stopped by user")
+    print("\nAgent stopped by user")
 except Exception as e:
-    print(f"❌ Error: {e}")
+    print(f" Error: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)

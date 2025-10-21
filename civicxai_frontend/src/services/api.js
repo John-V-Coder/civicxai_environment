@@ -133,11 +133,53 @@ export const usersAPI = {
   updateRole: (userId, role) => api.post(`/users/${userId}/role/`, { role }),
 };
 
-// XAI Explanation API
+// MeTTa AI Engine API
+export const mettaAPI = {
+  // Calculate priority score using MeTTa engine (fast, local)
+  calculatePriority: (data) => api.post('/metta/calculate-priority/', data),
+  
+  // Generate explanation using MeTTa
+  generateExplanation: (data) => api.post('/metta/explain/', data),
+  
+  // Health check for MeTTa engine
+  healthCheck: () => api.get('/metta/health/'),
+};
+
+// Gateway (uagents) AI API - Advanced with PDFs
+export const gatewayAPI = {
+  // Submit allocation request with optional PDFs
+  requestAllocation: (formData) => {
+    return api.post('/gateway/allocation/request/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  
+  // Request AI explanation with optional PDFs
+  requestExplanation: (formData) => {
+    return api.post('/gateway/explanation/request/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  
+  // Check status of a request (polling)
+  checkStatus: (requestId) => api.get(`/gateway/status/${requestId}/`),
+  
+  // Check gateway health
+  healthCheck: () => api.get('/gateway/health/'),
+  
+  // Get gateway metrics
+  getMetrics: () => api.get('/gateway/metrics/'),
+};
+
+// Legacy XAI API (deprecated - use mettaAPI or gatewayAPI)
 export const xaiAPI = {
-  calculatePriority: (data) => api.post('/calculate-priority/', data),
-  generateExplanation: (data) => api.post('/explain/', data),
-  healthCheck: () => api.get('/health/'),
+  calculatePriority: (data) => api.post('/metta/calculate-priority/', data),
+  generateExplanation: (data) => api.post('/metta/explain/', data),
+  healthCheck: () => api.get('/metta/health/'),
 };
 
 export default api;

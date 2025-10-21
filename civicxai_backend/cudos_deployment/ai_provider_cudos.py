@@ -22,7 +22,7 @@ from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
 from dotenv import load_dotenv
 from uagents import Agent, Context, Protocol, Model, Bureau
-from pydantic import BaseModel, Field
+from pydantic import  Field
 import openai
 from openai import AsyncOpenAI
 import logging
@@ -46,7 +46,7 @@ except ImportError:
     print("[WARNING] ASI:One agent not available - using OpenAI only")
 
 # =====================================================
-# 🌍 Configuration
+# Configuration
 # =====================================================
 load_dotenv()
 
@@ -83,7 +83,7 @@ if not OPENAI_API_KEY:
     logger.warning("⚠️ OPENAI_API_KEY not set - some features may be limited")
 
 # =====================================================
-# 📊 Enhanced Message Models (ASI:One + CUDOS Standards)
+# Enhanced Message Models (ASI:One + CUDOS Standards)
 # =====================================================
 
 class ComputeRequest(Model):
@@ -103,50 +103,45 @@ class ComputeResponse(Model):
     cost_cudos: Optional[float] = None
 
 class AllocationRequest(Model):
-    """Enhanced allocation request with compute tracking"""
+    """Enhanced allocation request with compute tracking - aligned with gateway"""
     request_id: str
+    type: str
     region_id: str
-    poverty_index: float
-    project_impact: float
-    environmental_score: float
-    corruption_risk: float
+    metrics: Dict[str, float]  # poverty_index, project_impact, environmental_score, corruption_risk
+    optimization: Dict[str, Any]
+    notes: Optional[Dict[str, str]] = None
+    files: Optional[list] = None  # Processed PDF/document data from gateway
+    urls: Optional[list] = None   # URL content data from gateway
     compute_preference: str = "local"  # local, cudos, hybrid
-    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+    timestamp: str
 
-class AllocationResponse(Model):
-    """Enhanced response with provenance"""
+class AIResponse(Model):
+    """AI response back to gateway - aligned with simplified provider"""
     request_id: str
-    region_id: str
-    priority_score: float
-    allocation_percentage: float
-    priority_level: str
-    recommendation: str
-    compute_provider: str  # local, cudos, hybrid
-    verification_hash: str  # For auditing
-    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+    status: str
+    response_type: str
+    data: Dict[str, Any]
+    metadata: Dict[str, Any]
+    timestamp: str
+    processing_time: float
 
 class ExplanationRequest(Model):
-    """Request for AI explanation with multi-source support"""
+    """Request for AI explanation - aligned with gateway"""
     request_id: str
+    type: str
     region_id: str
     allocation_data: Dict[str, Any]
-    context: str = ""
-    language: str = "en"
+    context: str
+    language: str
+    notes: Optional[Dict[str, str]] = None
+    files: Optional[list] = None  # Processed PDF/document data from gateway
+    urls: Optional[list] = None   # URL content data from gateway
     explanation_sources: List[str] = ["openai"]  # openai, asi1, cudos
 
-class ExplanationResponse(Model):
-    """Multi-source explanation response"""
-    request_id: str
-    region_id: str
-    explanation: str
-    confidence_score: float
-    suggested_actions: List[str]
-    sources_used: List[str]
-    compute_provider: str
-    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+# Note: Use AIResponse for explanation responses too
 
 # =====================================================
-# 🌐 CUDOS Integration
+# CUDOS Integration
 # =====================================================
 
 class CUDOSCompute:
@@ -179,7 +174,7 @@ class CUDOSCompute:
                 }
                 
                 # Simulated CUDOS API call
-                logger.info(f"🌐 Requesting CUDOS compute for {compute_type}")
+                logger.info(f"Requesting CUDOS compute for {compute_type}")
                 
                 # In reality, would call CUDOS API
                 # async with session.post(f"{self.endpoint}/compute", 
@@ -205,7 +200,7 @@ class CUDOSCompute:
         }
 
 # =====================================================
-# 🧠 Enhanced AI Service Provider
+#  Enhanced AI Service Provider
 # =====================================================
 
 class EnhancedCivicXAIProvider:
@@ -222,21 +217,21 @@ class EnhancedCivicXAIProvider:
         # MeTTa engine
         if METTA_AVAILABLE:
             self.metta_engine = EnhancedCivicMeTTaEngine()
-            logger.info("✅ MeTTa engine loaded")
+            logger.info("MeTTa engine loaded")
         else:
             self.metta_engine = None
             
         # ASI:One agent
         if ASI_AVAILABLE and ASI_API_KEY:
             self.asi_agent = ASIExplainAgent()
-            logger.info("✅ ASI:One agent loaded")
+            logger.info("ASI:One agent loaded")
         else:
             self.asi_agent = None
             
         # CUDOS compute
         self.cudos = CUDOSCompute()
         if self.cudos.enabled:
-            logger.info("✅ CUDOS compute enabled")
+            logger.info("CUDOS compute enabled")
             
         # Cache
         self.cache = {}
@@ -252,7 +247,7 @@ class EnhancedCivicXAIProvider:
             compute_id = await self.cudos.request_compute("allocation_calculation", data)
             if compute_id:
                 compute_provider = "cudos"
-                logger.info(f"🌐 Using CUDOS compute: {compute_id}")
+                logger.info(f"Using CUDOS compute: {compute_id}")
                 # In production, would wait for CUDOS result
                 # For now, continue with local calculation
         
@@ -325,7 +320,7 @@ class EnhancedCivicXAIProvider:
                 )
                 explanations.append(asi_explanation)
                 sources_used.append("asi1")
-                logger.info("✅ ASI:One explanation generated")
+                logger.info("ASI:One explanation generated")
             except Exception as e:
                 logger.error(f"ASI:One explanation failed: {e}")
         
@@ -335,7 +330,7 @@ class EnhancedCivicXAIProvider:
                 openai_explanation = await self._generate_openai_explanation(data)
                 explanations.append(openai_explanation["explanation"])
                 sources_used.append("openai")
-                logger.info("✅ OpenAI explanation generated")
+                logger.info("OpenAI explanation generated")
             except Exception as e:
                 logger.error(f"OpenAI explanation failed: {e}")
         
@@ -346,7 +341,7 @@ class EnhancedCivicXAIProvider:
                 if compute_id:
                     sources_used.append("cudos")
                     compute_provider = "cudos"
-                    logger.info(f"✅ CUDOS compute used: {compute_id}")
+                    logger.info(f"CUDOS compute used: {compute_id}")
         
         # Combine explanations
         if explanations:
@@ -434,7 +429,7 @@ class EnhancedCivicXAIProvider:
         return suggestions[:3]  # Limit to top 3 suggestions
 
 # =====================================================
-# 🤖 Enhanced AI Provider Agent with CUDOS
+# Enhanced AI Provider Agent with CUDOS
 # =====================================================
 
 class CUDOSAIProviderAgent:
@@ -449,7 +444,7 @@ class CUDOSAIProviderAgent:
                 endpoint=[AGENT_ENDPOINT],
                 mailbox_key=AGENTVERSE_MAILBOX_KEY
             )
-            logger.info("✅ AI Provider agent created with Agentverse support")
+            logger.info("AI Provider agent created with Agentverse support")
         else:
             self.agent = Agent(
                 name="CivicXAI_AI_Provider_CUDOS",
@@ -457,7 +452,7 @@ class CUDOSAIProviderAgent:
                 port=AGENT_PORT,
                 endpoint=[AGENT_ENDPOINT]
             )
-            logger.info("✅ AI Provider agent created in local mode")
+            logger.info("AI Provider agent created in local mode")
         
         # Initialize enhanced provider
         self.ai_provider = EnhancedCivicXAIProvider()
@@ -480,10 +475,10 @@ class CUDOSAIProviderAgent:
         @self.agent.on_event("startup")
         async def introduce_agent(ctx: Context):
             """Agent startup handler"""
-            ctx.logger.info(f"🤖 Enhanced AI Provider Agent started")
-            ctx.logger.info(f"📍 Address: {self.agent.address}")
-            ctx.logger.info(f"🧠 Models: {CHAT_MODEL}")
-            ctx.logger.info(f"🌐 Network: {AGENT_NETWORK}")
+            ctx.logger.info(f"Enhanced AI Provider Agent started")
+            ctx.logger.info(f"Address: {self.agent.address}")
+            ctx.logger.info(f"Models: {CHAT_MODEL}")
+            ctx.logger.info(f"Network: {AGENT_NETWORK}")
             
             status = []
             if METTA_AVAILABLE:
@@ -495,47 +490,88 @@ class CUDOSAIProviderAgent:
             if self.ai_provider.openai_client:
                 status.append("OpenAI")
             
-            ctx.logger.info(f"✅ Active integrations: {', '.join(status)}")
+            ctx.logger.info(f"Active integrations: {', '.join(status)}")
         
-        @self.protocol.on_message(model=AllocationRequest, replies=AllocationResponse)
+        @self.protocol.on_message(model=AllocationRequest, replies=AIResponse)
         async def handle_allocation_request(ctx: Context, sender: str, msg: AllocationRequest):
-            """Handle enhanced allocation request"""
-            ctx.logger.info(f"📊 Processing allocation for {msg.region_id} (compute: {msg.compute_preference})")
+            """Handle enhanced allocation request - aligned with gateway"""
+            ctx.logger.info(f"Processing allocation for {msg.region_id} (compute: {msg.compute_preference})")
             
             try:
-                # Calculate with optional CUDOS
+                start_time = datetime.now()
+                
+                # Extract metrics from dict
                 use_cudos = msg.compute_preference in ["cudos", "hybrid"]
                 result = await self.ai_provider.calculate_allocation({
-                    "poverty_index": msg.poverty_index,
-                    "project_impact": msg.project_impact,
-                    "environmental_score": msg.environmental_score,
-                    "corruption_risk": msg.corruption_risk
+                    "poverty_index": msg.metrics.get("poverty_index", 0),
+                    "project_impact": msg.metrics.get("project_impact", 0),
+                    "environmental_score": msg.metrics.get("environmental_score", 0),
+                    "corruption_risk": msg.metrics.get("corruption_risk", 0)
                 }, use_cudos=use_cudos)
                 
-                # Create enhanced response
-                response = AllocationResponse(
+                processing_time = (datetime.now() - start_time).total_seconds()
+                
+                # Log file/URL processing
+                if msg.files:
+                    ctx.logger.info(f"Processing {len(msg.files)} documents from gateway")
+                if msg.urls:
+                    ctx.logger.info(f"Processing {len(msg.urls)} URLs from gateway")
+                
+                # Create AIResponse aligned with simplified provider
+                response = AIResponse(
                     request_id=msg.request_id,
-                    region_id=msg.region_id,
-                    priority_score=result["priority_score"],
-                    allocation_percentage=result["allocation_percentage"],
-                    priority_level=result["priority_level"],
-                    recommendation=result["recommendation"],
-                    compute_provider=result["compute_provider"],
-                    verification_hash=result["verification_hash"]
+                    status="success",
+                    response_type="allocation_recommendation",
+                    data={
+                        "priority_level": result["priority_level"],
+                        "recommended_allocation_percentage": result["allocation_percentage"],
+                        "priority_score": result["priority_score"],
+                        "recommendation": result["recommendation"],
+                        "verification_hash": result["verification_hash"],
+                        "documents_analyzed": len(msg.files) if msg.files else 0,
+                        "urls_analyzed": len(msg.urls) if msg.urls else 0
+                    },
+                    metadata={
+                        "processing_time": processing_time,
+                        "compute_provider": result["compute_provider"],
+                        "model": CHAT_MODEL,
+                        "cudos_enabled": use_cudos
+                    },
+                    timestamp=datetime.now().isoformat(),
+                    processing_time=processing_time
                 )
                 
                 await ctx.send(sender, response)
-                ctx.logger.info(f"✅ Sent allocation response for {msg.region_id}")
+                ctx.logger.info(f"Sent allocation response for {msg.region_id}")
                 
             except Exception as e:
-                ctx.logger.error(f"❌ Error processing allocation: {e}")
+                ctx.logger.error(f"Error processing allocation: {e}")
+                # Send error response
+                error_response = AIResponse(
+                    request_id=msg.request_id,
+                    status="error",
+                    response_type="allocation_recommendation",
+                    data={"error": str(e)},
+                    metadata={"error_type": type(e).__name__},
+                    timestamp=datetime.now().isoformat(),
+                    processing_time=0.0
+                )
+                await ctx.send(sender, error_response)
         
-        @self.protocol.on_message(model=ExplanationRequest, replies=ExplanationResponse)
+        @self.protocol.on_message(model=ExplanationRequest, replies=AIResponse)
         async def handle_explanation_request(ctx: Context, sender: str, msg: ExplanationRequest):
-            """Handle multi-source explanation request"""
-            ctx.logger.info(f"💬 Generating explanation for {msg.region_id} using {msg.explanation_sources}")
+            """Handle multi-source explanation request - aligned with gateway"""
+            ctx.logger.info(f"Generating explanation for {msg.region_id} using {msg.explanation_sources}")
             
             try:
+                start_time = datetime.now()
+                
+                # Log file/URL processing
+                if msg.files:
+                    ctx.logger.info(f"Including {len(msg.files)} documents in explanation")
+                if msg.urls:
+                    ctx.logger.info(f"Including {len(msg.urls)} URLs in explanation")
+                
                 # Generate multi-source explanation
                 result = await self.ai_provider.generate_explanation({
                     "region_id": msg.region_id,
@@ -545,29 +581,56 @@ class CUDOSAIProviderAgent:
                     "explanation_sources": msg.explanation_sources
                 })
                 
-                # Create response
-                response = ExplanationResponse(
+                processing_time = (datetime.now() - start_time).total_seconds()
+                
+                # Create AIResponse aligned with simplified provider
+                response = AIResponse(
                     request_id=msg.request_id,
-                    region_id=msg.region_id,
-                    explanation=result["explanation"],
-                    confidence_score=result["confidence_score"],
-                    suggested_actions=result["suggested_actions"],
-                    sources_used=result["sources_used"],
-                    compute_provider=result["compute_provider"]
+                    status="success",
+                    response_type="explanation",
+                    data={
+                        "explanation": result["explanation"],
+                        "confidence_score": result["confidence_score"],
+                        "suggested_actions": result["suggested_actions"],
+                        "region_id": msg.region_id,
+                        "language": msg.language,
+                        "documents_analyzed": len(msg.files) if msg.files else 0,
+                        "urls_analyzed": len(msg.urls) if msg.urls else 0
+                    },
+                    metadata={
+                        "processing_time": processing_time,
+                        "compute_provider": result["compute_provider"],
+                        "sources_used": result["sources_used"],
+                        "model": CHAT_MODEL,
+                        "language": msg.language
+                    },
+                    timestamp=datetime.now().isoformat(),
+                    processing_time=processing_time
                 )
                 
                 await ctx.send(sender, response)
-                ctx.logger.info(f"✅ Sent explanation for {msg.region_id} using {result['sources_used']}")
+                ctx.logger.info(f"Sent explanation for {msg.region_id} using {result['sources_used']}")
                 
             except Exception as e:
-                ctx.logger.error(f"❌ Error generating explanation: {e}")
+                ctx.logger.error(f"Error generating explanation: {e}")
+                # Send error response
+                error_response = AIResponse(
+                    request_id=msg.request_id,
+                    status="error",
+                    response_type="explanation",
+                    data={"error": str(e)},
+                    metadata={"error_type": type(e).__name__},
+                    timestamp=datetime.now().isoformat(),
+                    processing_time=0.0
+                )
+                await ctx.send(sender, error_response)
     
     async def run(self):
         """Run the enhanced agent"""
         await self.agent.run_async()
 
 # =====================================================
-# 🚀 Main Entry Point
+# Main Entry Point
 # =====================================================
 
 async def main():
@@ -577,8 +640,8 @@ async def main():
     bureau = Bureau()
     bureau.add(provider.agent)
     
-    logger.info("🚀 Starting Enhanced CivicXAI AI Provider with CUDOS...")
-    logger.info("📚 Integrations: Agentverse + ASI:One + CUDOS + OpenAI + MeTTa")
+    logger.info(" Starting Enhanced CivicXAI AI Provider with CUDOS...")
+    logger.info("Integrations: Agentverse + ASI:One + CUDOS + OpenAI + MeTTa")
     
     await bureau.run()
 
@@ -586,7 +649,7 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logger.info("👋 Enhanced AI Provider stopped by user")
+        logger.info("Enhanced AI Provider stopped by user")
     except Exception as e:
-        logger.error(f"❌ Fatal error: {e}")
+        logger.error(f" Fatal error: {e}")
         raise

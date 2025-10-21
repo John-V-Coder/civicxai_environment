@@ -10,7 +10,7 @@ User = get_user_model()
 
 
 # =====================================================
-# 🔐 Authentication Serializers
+# Authentication Serializers
 # =====================================================
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -100,7 +100,7 @@ class UserListSerializer(serializers.ModelSerializer):
 
 
 # =====================================================
-# 🌍 Region & Allocation Serializers
+# Region & Allocation Serializers
 # =====================================================
 
 class RegionSerializer(serializers.ModelSerializer):
@@ -172,7 +172,7 @@ class AllocationCreateSerializer(serializers.ModelSerializer):
 
 
 # =====================================================
-# 👥 Workgroup Serializers
+# Workgroup Serializers
 # =====================================================
 
 class WorkgroupSerializer(serializers.ModelSerializer):
@@ -207,7 +207,7 @@ class WorkgroupListSerializer(serializers.ModelSerializer):
 
 
 # =====================================================
-# 📋 Proposal & Voting Serializers
+# Proposal & Voting Serializers
 # =====================================================
 
 class ProposalSerializer(serializers.ModelSerializer):
@@ -277,7 +277,7 @@ class VoteSerializer(serializers.ModelSerializer):
 
 
 # =====================================================
-# 📅 Event Serializers
+# Event Serializers
 # =====================================================
 
 class EventSerializer(serializers.ModelSerializer):
@@ -303,7 +303,7 @@ class EventListSerializer(serializers.ModelSerializer):
 
 
 # =====================================================
-# 📊 Dashboard Metrics Serializer
+# Dashboard Metrics Serializer
 # =====================================================
 
 class DashboardMetricsSerializer(serializers.ModelSerializer):

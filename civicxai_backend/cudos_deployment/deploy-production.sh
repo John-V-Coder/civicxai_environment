@@ -11,7 +11,7 @@ echo "=================================================="
 
 # Production checks
 if [ ! -f .env ]; then
-    echo "❌ .env file not found!"
+    echo ".env file not found!"
     exit 1
 fi
 
@@ -19,21 +19,21 @@ fi
 source .env
 
 if [ -z "$ANTHROPIC_API_KEY" ]; then
-    echo "❌ ANTHROPIC_API_KEY not set!"
+    echo "ANTHROPIC_API_KEY not set!"
     exit 1
 fi
 
 if [ -z "$GATEWAY_AGENT_SEED" ] || [ "$GATEWAY_AGENT_SEED" = "your_unique_gateway_seed_here_change_this" ]; then
-    echo "❌ Please set a unique GATEWAY_AGENT_SEED!"
+    echo "Please set a unique GATEWAY_AGENT_SEED!"
     exit 1
 fi
 
 if [ -z "$PROVIDER_AGENT_SEED" ] || [ "$PROVIDER_AGENT_SEED" = "your_unique_provider_seed_here_change_this" ]; then
-    echo "❌ Please set a unique PROVIDER_AGENT_SEED!"
+    echo "Please set a unique PROVIDER_AGENT_SEED!"
     exit 1
 fi
 
-echo "✅ Environment validation passed"
+echo "Environment validation passed"
 
 # Deploy with production profile (includes Cudos node)
 echo "Starting production deployment..."

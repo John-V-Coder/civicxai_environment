@@ -8,7 +8,7 @@ from .models import (
 
 
 # =====================================================
-# 🔐 User Admin
+# User Admin
 # =====================================================
 
 @admin.register(User)
@@ -41,7 +41,7 @@ class CustomUserAdmin(UserAdmin):
 
 
 # =====================================================
-# 🌍 Region Admin
+# Region Admin
 # =====================================================
 
 @admin.register(Region)
@@ -94,7 +94,7 @@ class RegionAdmin(admin.ModelAdmin):
 
 
 # =====================================================
-# 💰 Allocation Admin
+# Allocation Admin
 # =====================================================
 
 @admin.register(Allocation)
@@ -129,7 +129,7 @@ class AllocationAdmin(admin.ModelAdmin):
 
 
 # =====================================================
-# 👥 Workgroup Admin
+# Workgroup Admin
 # =====================================================
 
 @admin.register(Workgroup)
@@ -151,7 +151,7 @@ class WorkgroupAdmin(admin.ModelAdmin):
 
 
 # =====================================================
-# 📋 Proposal Admin
+#  Proposal Admin
 # =====================================================
 
 @admin.register(Proposal)
@@ -192,7 +192,7 @@ class ProposalAdmin(admin.ModelAdmin):
 
 
 # =====================================================
-# 🗳️ Vote Admin
+# Vote Admin
 # =====================================================
 
 @admin.register(Vote)
@@ -205,7 +205,7 @@ class VoteAdmin(admin.ModelAdmin):
 
 
 # =====================================================
-# 📅 Event Admin
+# Event Admin
 # =====================================================
 
 @admin.register(Event)
@@ -218,7 +218,7 @@ class EventAdmin(admin.ModelAdmin):
 
 
 # =====================================================
-# 📊 Dashboard Metrics Admin
+# Dashboard Metrics Admin
 # =====================================================
 
 @admin.register(DashboardMetrics)

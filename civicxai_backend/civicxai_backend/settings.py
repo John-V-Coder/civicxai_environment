@@ -193,3 +193,8 @@ SIMPLE_JWT = {
     
     'JTI_CLAIM': 'jti',
 }
+
+# =====================================================
+# uAgents Gateway Configuration
+# =====================================================
+UAGENTS_GATEWAY_URL = 'http://localhost:8080'

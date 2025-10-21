@@ -1,10 +1,10 @@
+import ProposalCard from '@/components/Dashboard/ProposalCard';
 import React from 'react';
 
 const Proposals = () => {
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Proposals</h1>
-      <p className="text-gray-600 dark:text-gray-400">Proposals page - Coming soon</p>
+      <ProposalCard />
     </div>
   );
 };

@@ -23,7 +23,7 @@ User = get_user_model()
 
 
 # =====================================================
-# 🔢 MeTTa / Explanation API
+# MeTTa / Explanation API
 # =====================================================
 
 class CalculatePriorityView(APIView):
@@ -114,7 +114,7 @@ class GenerateExplanationAPIView(APIView):
 
 
 # =====================================================
-# 🌍 Region ViewSet
+# Region ViewSet
 # =====================================================
 
 class RegionViewSet(viewsets.ModelViewSet):
@@ -146,7 +146,7 @@ class RegionViewSet(viewsets.ModelViewSet):
 
 
 # =====================================================
-# 💰 Allocation ViewSet
+# Allocation ViewSet
 # =====================================================
 
 class AllocationViewSet(viewsets.ModelViewSet):
@@ -190,7 +190,7 @@ class AllocationViewSet(viewsets.ModelViewSet):
 
 
 # =====================================================
-# 👥 Workgroup ViewSet
+# Workgroup ViewSet
 # =====================================================
 
 class WorkgroupViewSet(viewsets.ModelViewSet):
@@ -217,7 +217,7 @@ class WorkgroupViewSet(viewsets.ModelViewSet):
 
 
 # =====================================================
-# 📋 Proposal ViewSet
+# Proposal ViewSet
 # =====================================================
 
 class ProposalViewSet(viewsets.ModelViewSet):
@@ -239,7 +239,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
 
 # =====================================================
-# 🗳️ Vote ViewSet
+# Vote ViewSet
 # =====================================================
 
 class VoteViewSet(viewsets.ReadOnlyModelViewSet):
@@ -249,7 +249,7 @@ class VoteViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 # =====================================================
-# 📅 Event ViewSet
+# Event ViewSet
 # =====================================================
 
 class EventViewSet(viewsets.ModelViewSet):

@@ -12,26 +12,22 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import {
   Menu,
   Search,
   Bell,
-  Sun,
-  Moon,
   User,
   Settings,
-  LogIn,
   LogOut,
   HelpCircle,
   MessageSquare,
-  ChevronDown
+  ChevronDown,
+  TrendingUp
 } from 'lucide-react';
 import useAuthStore from '@/store/authStore';
 
 const Header = ({ onMenuClick }) => {
   const { user, logout } = useAuthStore();
-  const [darkMode, setDarkMode] = React.useState(true);
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-slate-800 bg-slate-950/50 backdrop-blur-sm px-4 lg:px-6">
@@ -59,6 +55,16 @@ const Header = ({ onMenuClick }) => {
 
       {/* Right Section */}
       <div className="flex items-center gap-3">
+        {/* AGIX Price Widget */}
+        <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600/20 to-indigo-600/20 border border-violet-600/30">
+          <TrendingUp className="h-4 w-4 text-violet-400" />
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400">AGIX</span>
+            <span className="text-sm font-bold text-white">$0.28</span>
+            <span className="text-xs text-green-400">+5.2%</span>
+          </div>
+        </div>
+
         {/* Quick Actions */}
         <Button
           variant="ghost"
@@ -78,19 +84,17 @@ const Header = ({ onMenuClick }) => {
           <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 border-2 border-slate-950 animate-pulse" />
         </Button>
 
-        {/* Theme Toggle */}
-        <div className="flex items-center gap-2 px-3">
-          <Sun className="h-4 w-4 text-slate-400" />
-          <Switch
-            checked={darkMode}
-            onCheckedChange={setDarkMode}
-            className="data-[state=checked]:bg-violet-600"
-          />
-          <Moon className="h-4 w-4 text-slate-400" />
-        </div>
+        {/* Settings */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-slate-400 hover:text-white"
+        >
+          <Settings className="h-5 w-5" />
+        </Button>
 
-        {/* User Menu / Sign In Button */}
-        {user ? (
+        {/* User Menu - Only show when logged in */}
+        {user && (
           <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -154,15 +158,6 @@ const Header = ({ onMenuClick }) => {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        ) : (
-          <Link to="/login">
-            <Button 
-              className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-lg shadow-violet-600/20"
-            >
-              <LogIn className="h-4 w-4 mr-2" />
-              Sign In
-            </Button>
-          </Link>
         )}
       </div>
     </header>
