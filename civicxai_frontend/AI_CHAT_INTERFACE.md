@@ -1,34 +1,34 @@
-# 💬 AI Gateway Chat Interface
+# AI Gateway Chat Interface
 
 ## Overview
 
 The AI Gateway Chat Interface provides a conversational way to interact with AI services for allocation analysis, priority calculations, and explanations. Users can ask questions naturally and get instant AI-powered responses.
 
-## 🎯 Features
+## Features
 
 ### Chat-Based Interaction
-- ✅ Natural language processing
-- ✅ Intent detection
-- ✅ Conversational AI responses
-- ✅ Real-time message updates
-- ✅ Typing indicators
-- ✅ Message history
+- Natural language processing
+- Intent detection
+- Conversational AI responses
+- Real-time message updates
+- Typing indicators
+- Message history
 
 ### AI Capabilities
-- ✅ **Priority Calculation** - Ask for priority scores
-- ✅ **Allocation Analysis** - Request detailed analysis
-- ✅ **Explanations** - Get explanations for decisions
-- ✅ **Health Checks** - Check system status
-- ✅ **PDF Analysis** - Upload documents for context
+- **Priority Calculation** - Ask for priority scores
+- **Allocation Analysis** - Request detailed analysis
+- **Explanations** - Get explanations for decisions
+-  **Health Checks** - Check system status
+-  **PDF Analysis** - Upload documents for context
 
 ### File Support
-- ✅ PDF documents
-- ✅ Images (PNG, JPG, JPEG)
-- ✅ Text files (TXT, CSV)
-- ✅ Multiple file uploads
-- ✅ File preview and removal
+- PDF documents
+- Images (PNG, JPG, JPEG)
+- Text files (TXT, CSV)
+- Multiple file uploads
+- File preview and removal
 
-## 📦 Component Structure
+## Component Structure
 
 ### AIGatewayChat Component
 **Location:** `src/components/AIgateway/AIGatewayChat.jsx`
@@ -46,48 +46,47 @@ The AI Gateway Chat Interface provides a conversational way to interact with AI 
 2. **Allocation Request** - Form-based allocation
 3. **Explanation Request** - Form-based explanation
 
-## 🗣️ Natural Language Commands
+## Natural Language Commands
 
 ### Priority Calculation
-```
+
 "Calculate priority for poverty 0.8"
 "What's the priority score with impact 0.9?"
 "Calculate priority: poverty 0.75, impact 0.85, corruption 0.3"
-```
+
 
 ### Allocation Analysis
-```
+
 "Analyze this region with high poverty"
 "Give me allocation recommendation for poverty 0.8, impact 0.9"
 "Analyze allocation with uploaded PDF"
-```
+
 
 ### Explanations
-```
+
 "Explain why this region got high priority"
 "Explain the allocation decision"
 "Why was this region prioritized?"
-```
+
 
 ### Health Check
-```
+
 "Check system health"
 "What's the gateway status?"
 "Is everything working?"
-```
 
-## 💡 Usage Examples
+
+## Usage Examples
 
 ### Basic Question
 
 **User:** "Calculate priority for poverty 0.8"
 
 **AI Response:**
-```
-✅ Priority Calculation Complete
+Priority Calculation Complete
 
-📊 Priority Score: 0.76
-📈 Confidence: 85.0%
+Priority Score: 0.76
+Confidence: 85.0%
 
 Breakdown:
 • Poverty Index: 0.8
@@ -103,12 +102,11 @@ This score indicates high priority for resource allocation.
 **User:** *Uploads PDF + asks* "Analyze this region"
 
 **AI Response:**
-```
-🧠 AI Analysis Complete
+AI Analysis Complete
 
-🎯 Priority Level: High
-📊 Confidence: 92.3%
-💰 Recommended Allocation: 75%
+ Priority Level: High
+ Confidence: 92.3%
+ Recommended Allocation: 75%
 
 Key Findings:
 • High poverty indicators identified
@@ -121,16 +119,15 @@ Key Findings:
 **User:** "Check system status"
 
 **AI Response:**
-```
-🏥 System Health Check
+ System Health Check
 
 Gateway Status: healthy
-Agent Active: ✅ Yes
+Agent Active: Yes
 
 All systems are operational.
 ```
 
-## 🔧 Integration Details
+## Integration Details
 
 ### Intent Detection
 The chat interface automatically detects user intent:
@@ -184,53 +181,42 @@ switch (intent) {
 }
 ```
 
-## 🎨 UI Components
+## UI Components
 
 ### Message Types
 
 #### User Message
-```jsx
 <div className="bg-violet-600 text-white p-3 rounded-lg">
   {message.content}
 </div>
-```
 
 #### Bot Message
-```jsx
 <div className="bg-slate-800 border border-slate-700 p-3 rounded-lg">
   {message.content}
 </div>
-```
 
 #### Error Message
-```jsx
 <div className="bg-red-900/30 border border-red-700 p-3 rounded-lg">
-  ⚠️ Error message
 </div>
-```
 
 ### Typing Indicator
-```jsx
 <div className="flex gap-1">
   <span className="animate-bounce">•</span>
   <span className="animate-bounce" style={{animationDelay: '150ms'}}>•</span>
   <span className="animate-bounce" style={{animationDelay: '300ms'}}>•</span>
 </div>
-```
 
-## 📱 Responsive Design
+## Responsive Design
 
 - Full-height chat interface
 - Auto-scroll to latest message
 - Mobile-friendly layout
 - Touch-optimized controls
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Navigate to AI Gateway
-```
 http://localhost:5173/gateway
-```
 
 ### 2. Click "Chat Assistant" Tab
 The chat interface is now the default tab.
@@ -243,7 +229,7 @@ Type your question or upload files and ask.
 "Hello! Can you help me calculate priority for a region with poverty 0.8?"
 ```
 
-## 💬 Chat Flow Example
+## Chat Flow Example
 
 ```
 User: "Hi, I need help with allocation analysis"
@@ -251,21 +237,21 @@ Bot:  "Hello! I can help you with allocation analysis.
        Please provide the metrics or upload documents..."
 
 User: *Uploads PDF* "Analyze this region"
-Bot:  "🧠 Analyzing your document... 
-       ✅ Analysis Complete!
+Bot:  "Analyzing your document... 
+       Analysis Complete!
        
        Priority Level: High
        Confidence: 89%
        ..."
 
 User: "Why did it get high priority?"
-Bot:  "📝 This region received high priority because:
+Bot:  "This region received high priority because:
        • Poverty index is above threshold...
        • Project impact potential is strong...
        ..."
 ```
 
-## 🔍 Advanced Features
+## Advanced Features
 
 ### Context Awareness
 - Remembers conversation history
@@ -282,7 +268,7 @@ Bot:  "📝 This region received high priority because:
 - Helpful error messages
 - Suggestions for recovery
 
-## 🛠️ Customization
+## Customization
 
 ### Add New Intents
 
@@ -320,7 +306,7 @@ botResponse = `🎯 **Custom Format**\n\n` +
 </div>
 ```
 
-## 📊 Data Flow
+## Data Flow
 
 ```
 User Input
@@ -346,7 +332,7 @@ useMeTTa Hook            useGateway Hook
         Display to User
 ```
 
-## ✅ Best Practices
+## Best Practices
 
 1. **Clear Questions** - Be specific in your requests
 2. **Use Keywords** - Include "calculate", "analyze", "explain"
@@ -354,7 +340,7 @@ useMeTTa Hook            useGateway Hook
 4. **Check Status** - Use health checks to verify system status
 5. **Review History** - Scroll through previous messages for context
 
-## 🧪 Testing
+## Testing
 
 ### Test Priority Calculation
 ```
@@ -374,7 +360,7 @@ Input: "Explain why region X got priority"
 Expected: Detailed explanation
 ```
 
-## 📚 Related Documentation
+## Related Documentation
 
 - `PROPOSALCARD_INTEGRATION.md` - ProposalCard integration
 - `METRICCARD_INTEGRATION.md` - MetricCard integration

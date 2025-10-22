@@ -1,6 +1,6 @@
-# 🔧 Complete Backend Setup Guide - CivicXAI
+# Complete Backend Setup Guide - CivicXAI
 
-## ⚠️ Critical Installation Steps Before Running
+## Critical Installation Steps Before Running
 
 ### Step 1: Create Virtual Environment (Recommended)
 ```bash
@@ -137,7 +137,7 @@ curl http://localhost:8000/api/health/
 # Should return: {"status": "healthy", "metta_engine": "operational", ...}
 ```
 
-## 🐛 Common Installation Issues & Solutions
+## Common Installation Issues & Solutions
 
 ### Issue 1: ModuleNotFoundError: No module named 'hyperon'
 **Solution:**
@@ -197,7 +197,7 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 ```
 
-## ✅ Verification Checklist
+## Verification Checklist
 
 Run these commands to verify everything is installed correctly:
 
@@ -224,7 +224,7 @@ python manage.py runserver
 # Then visit: http://localhost:8000/api/
 ```
 
-## 🚀 Quick Start After Installation
+## Quick Start After Installation
 
 ```bash
 # 1. Start Django server
@@ -240,7 +240,7 @@ cd uagents_gateway/gateway
 python main.py
 ```
 
-## 📋 What Each Package Does
+## What Each Package Does
 
 | Package | Purpose |
 |---------|---------|
@@ -256,7 +256,7 @@ python main.py
 | `celery` | Async task processing |
 | `redis` | Caching and message broker |
 
-## 🔐 Security Notes
+## Security Notes
 
 Before deploying to production:
 1. Change `SECRET_KEY` in settings.py
@@ -267,7 +267,7 @@ Before deploying to production:
 6. Use environment variables for all sensitive data
 7. Enable HTTPS
 
-## 📝 Next Steps
+## Next Steps
 
 Once everything is installed and verified:
 1. Access admin panel: http://localhost:8000/admin/
