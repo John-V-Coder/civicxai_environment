@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,8 @@ import {
   TrendingUp,
   Clock,
   ChevronRight,
-  Loader2
+  Loader2,
+  MessageSquare
 } from 'lucide-react';
 import { useGateway } from '@/hooks/useGateway';
 import { useMeTTa } from '@/hooks/useMeTTa';
@@ -32,6 +34,7 @@ const ProposalCard = ({
   onViewDetails,
   onUpdate
 }) => {
+  const navigate = useNavigate();
   const [loadingAction, setLoadingAction] = useState(null);
   const { calculatePriority, loading: mettaLoading } = useMeTTa();
   const { requestAllocation, loading: gatewayLoading } = useGateway();
@@ -132,59 +135,66 @@ const ProposalCard = ({
 
   const isLoading = mettaLoading || gatewayLoading || loadingAction;
 
+  // Navigate to chat page when card is clicked
+  const handleCardClick = () => {
+    if (id) {
+      navigate(`/proposal-chat/${id}`);
+    } else if (onViewDetails) {
+      onViewDetails(id);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.01 }}
+      whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.2 }}
+      className="h-full"
     >
       <Card 
-        className="bg-slate-800/50 border-slate-700 hover:border-slate-600 transition-all cursor-pointer group"
-        onClick={() => onViewDetails && onViewDetails(id)}
+        className="bg-slate-800/50 border-slate-700 hover:border-violet-600/50 transition-all cursor-pointer group h-full flex flex-col"
+        onClick={handleCardClick}
       >
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex gap-2">
+        <CardHeader className="pb-2 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <Badge 
+              variant="outline" 
+              className={`${statusColors[status?.toLowerCase()] || statusColors['pending']} text-xs`}
+            >
+              <Clock className="w-2.5 h-2.5 mr-1" />
+              {status || 'Pending'}
+            </Badge>
+            {type && (
               <Badge 
-                variant="outline" 
-                className={statusColors[status?.toLowerCase()] || statusColors['pending']}
+                variant="secondary" 
+                className={`${typeColors[type.toLowerCase()] || 'bg-slate-500/20 text-slate-400'} text-xs`}
               >
-                <Clock className="w-3 h-3 mr-1" />
-                {status || 'Pending'}
+                {type}
               </Badge>
-              {type && (
-                <Badge 
-                  variant="secondary" 
-                  className={typeColors[type.toLowerCase()] || 'bg-slate-500/20 text-slate-400'}
-                >
-                  {type}
-                </Badge>
-              )}
-            </div>
-            <ChevronRight className="w-5 h-5 text-slate-400 group-hover:translate-x-1 transition-transform" />
+            )}
           </div>
-          <CardTitle className="text-white text-lg group-hover:text-violet-400 transition-colors">
+          <CardTitle className="text-white text-base font-semibold group-hover:text-violet-400 transition-colors line-clamp-2 leading-tight">
             {title || 'Untitled Proposal'}
           </CardTitle>
           {description && (
-            <CardDescription className="text-slate-400 line-clamp-2">
+            <CardDescription className="text-slate-400 text-xs line-clamp-2 leading-snug">
               {description}
             </CardDescription>
           )}
         </CardHeader>
         
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-2 pt-0 flex-1 flex flex-col">
           {/* Metrics Display */}
           {metrics && Object.keys(metrics).length > 0 && (
-            <div className="grid grid-cols-2 gap-2 p-2 bg-slate-900/50 rounded-md">
-              {Object.entries(metrics).slice(0, 4).map(([key, value]) => (
-                <div key={key} className="flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3 text-violet-400" />
-                  <span className="text-xs text-slate-400">
+            <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-slate-900/50 rounded text-xs">
+              {Object.entries(metrics).slice(0, 2).map(([key, value]) => (
+                <div key={key} className="flex items-center gap-0.5 truncate">
+                  <TrendingUp className="w-2.5 h-2.5 text-violet-400 flex-shrink-0" />
+                  <span className="text-slate-400 text-[10px] truncate">
                     {key.replace('_', ' ')}: 
                   </span>
-                  <span className="text-xs text-white font-medium">
+                  <span className="text-white font-medium text-[10px]">
                     {typeof value === 'number' ? value.toFixed(2) : value}
                   </span>
                 </div>
@@ -194,43 +204,62 @@ const ProposalCard = ({
 
           {/* Date */}
           {date && (
-            <p className="text-xs text-slate-500 flex items-center gap-1">
-              <Clock className="w-3 h-3" />
+            <p className="text-[10px] text-slate-500 flex items-center gap-0.5">
+              <Clock className="w-2.5 h-2.5" />
               {date}
             </p>
           )}
 
           {/* Action Buttons */}
-          <div className="flex gap-2 pt-2">
+          <div className="flex flex-col gap-1.5 mt-auto">
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
-              onClick={handleCalculatePriority}
-              disabled={isLoading}
-              className="flex-1 bg-slate-900 border-slate-700 hover:bg-slate-800 hover:border-violet-600"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCardClick();
+              }}
+              className="w-full bg-violet-600 hover:bg-violet-700 text-white h-7 text-xs"
             >
-              {loadingAction === 'priority' ? (
-                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-              ) : (
-                <Calculator className="w-3 h-3 mr-1" />
-              )}
-              Priority
+              <MessageSquare className="w-3 h-3 mr-1" />
+              Chat with AI
             </Button>
             
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRequestAnalysis}
-              disabled={isLoading}
-              className="flex-1 bg-slate-900 border-slate-700 hover:bg-slate-800 hover:border-violet-600"
-            >
-              {loadingAction === 'analysis' ? (
-                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-              ) : (
-                <Brain className="w-3 h-3 mr-1" />
-              )}
-              AI Analysis
-            </Button>
+            <div className="flex gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCalculatePriority}
+                disabled={isLoading}
+                className="flex-1 bg-slate-900 border-slate-700 hover:bg-slate-800 hover:border-violet-600 h-6 text-[10px] px-2"
+              >
+                {loadingAction === 'priority' ? (
+                  <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                ) : (
+                  <>
+                    <Calculator className="w-2.5 h-2.5 mr-0.5" />
+                    Priority
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRequestAnalysis}
+                disabled={isLoading}
+                className="flex-1 bg-slate-900 border-slate-700 hover:bg-slate-800 hover:border-violet-600 h-6 text-[10px] px-2"
+              >
+                {loadingAction === 'analysis' ? (
+                  <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                ) : (
+                  <>
+                    <Brain className="w-2.5 h-2.5 mr-0.5" />
+                    Analysis
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

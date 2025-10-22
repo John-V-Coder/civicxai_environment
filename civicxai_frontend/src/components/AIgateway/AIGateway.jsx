@@ -181,11 +181,24 @@ const AIGateway = () => {
     setRequestId(null);
 
     try {
-      // Parse allocation_data JSON
+      // Validate and parse allocation_data JSON
+      let allocationData = {};
+      if (explanationForm.allocation_data && explanationForm.allocation_data.trim()) {
+        try {
+          allocationData = JSON.parse(explanationForm.allocation_data);
+        } catch (jsonError) {
+          toast.error('Invalid JSON in Allocation Data field. Please enter valid JSON format.', {
+            duration: 5000
+          });
+          console.error('JSON Parse Error:', jsonError);
+          console.error('Attempted to parse:', explanationForm.allocation_data);
+          return; // Stop execution
+        }
+      }
+      
       const data = {
         region_id: explanationForm.region_id,
-        allocation_data: explanationForm.allocation_data ? 
-          JSON.parse(explanationForm.allocation_data) : {},
+        allocation_data: allocationData,
         context: explanationForm.context,
         language: explanationForm.language,
         notes: explanationForm.notes
@@ -501,14 +514,19 @@ const AIGateway = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-slate-300">Allocation Data (JSON)</Label>
+                  <Label className="text-slate-300">
+                    Allocation Data (JSON) <span className="text-red-500">*</span>
+                  </Label>
                   <Textarea
                     value={explanationForm.allocation_data}
                     onChange={(e) => setExplanationForm({...explanationForm, allocation_data: e.target.value})}
-                    placeholder='{"priority_score": 0.85, "amount": 5000000}'
+                    placeholder='{"poverty_index": 0.85, "project_impact": 0.90, "environmental_score": 0.75, "corruption_risk": 0.30, "priority_score": 0.785, "allocation_percentage": 78.5}'
                     className="bg-slate-800 border-slate-700 text-white font-mono"
                     rows={4}
                   />
+                  <p className="text-xs text-slate-500">
+                    Must be valid JSON format. Example: {`{"poverty_index": 0.85, "priority_score": 0.78}`}
+                  </p>
                 </div>
 
                 <div className="space-y-2">

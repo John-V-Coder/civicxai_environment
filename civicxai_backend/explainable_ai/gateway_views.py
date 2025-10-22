@@ -212,12 +212,42 @@ class GatewayExplanationRequestView(APIView):
                 }, status=status.HTTP_200_OK)
                 
         except httpx.ConnectError as e:
-            return Response({
-                'error': 'Gateway is not running',
-                'detail': f'Cannot connect to uAgents gateway at {GATEWAY_API_URL}',
-                'solution': 'Start the gateway: python run_uagents.py',
-                'gateway_url': GATEWAY_API_URL
-            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            # Fallback to local explanation generation
+            try:
+                from .metta_service import generate_explanation_from_data
+                import json
+                
+                # Parse allocation_data
+                try:
+                    allocation_data = json.loads(form_data.get('allocation_data', '{}'))
+                except json.JSONDecodeError:
+                    allocation_data = {}
+                
+                # Generate local explanation
+                explanation_result = generate_explanation_from_data(
+                    region_id=form_data.get('region_id', 'Unknown'),
+                    allocation_data=allocation_data,
+                    context=form_data.get('context', ''),
+                    language=form_data.get('language', 'en')
+                )
+                
+                return Response({
+                    'success': True,
+                    'request_id': f"local_explanation_{form_data.get('region_id')}",
+                    'status': 'completed',
+                    'data': explanation_result,
+                    'message': 'Gateway unavailable - used local explanation generation',
+                    'warning': f'uAgents Gateway is not running at {GATEWAY_API_URL}. Using local generation.'
+                }, status=status.HTTP_200_OK)
+                
+            except Exception as fallback_error:
+                return Response({
+                    'error': 'Gateway is not running and local fallback failed',
+                    'detail': f'Cannot connect to uAgents gateway at {GATEWAY_API_URL}',
+                    'solution': 'Start the gateway: python run_uagents.py',
+                    'gateway_url': GATEWAY_API_URL,
+                    'fallback_error': str(fallback_error)
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             
         except httpx.HTTPStatusError as e:
             return Response({

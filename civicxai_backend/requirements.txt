@@ -37,6 +37,7 @@ frozenlist==1.8.0
 fsspec==2025.9.0
 googleapis-common-protos==1.70.0
 grpcio==1.75.1
+gunicorn==23.0.0
 h11==0.16.0
 hf-xet==1.1.10
 httpcore==1.0.9
@@ -109,6 +110,7 @@ rpds-py==0.27.1
 safetensors==0.6.2
 scikit-learn==1.7.2
 scipy==1.16.2
+sentence-transformers==5.1.1
 setuptools==80.9.0
 shellingham==1.5.4
 six==1.17.0
@@ -126,6 +128,7 @@ sympy==1.14.0
 thinc==8.3.6
 threadpoolctl==3.6.0
 tokenizers==0.22.1
+torch==2.9.0
 tqdm==4.67.1
 transformers==4.57.1
 triton==3.5.0
@@ -142,3 +145,5 @@ wasabi==1.1.3
 weasel==0.4.1
 wrapt==2.0.0
 yarl==1.22.0
+
+hyperon==0.2.2
