@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
-from .models import AllocationRequest
+from ..models import AllocationRequest
 
 
 class AllocationRequestPagination(PageNumberPagination):

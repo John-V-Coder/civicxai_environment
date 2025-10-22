@@ -7,15 +7,15 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
-from .models import Region, Allocation, Workgroup, Proposal, Vote, Event
-from .serializers import (
+from ..models import Region, Allocation, Workgroup, Proposal, Vote, Event
+from ..serializers import (
     RegionSerializer, RegionListSerializer,
     AllocationSerializer, AllocationCreateSerializer,
     WorkgroupSerializer, WorkgroupListSerializer,
     ProposalSerializer, ProposalListSerializer,
     VoteSerializer, EventSerializer, EventListSerializer,
 )
-from .permissions import IsOwnerOrReadOnly, IsAdminOrReadOnly, IsContributorOrReadOnly
+from ..permissions import IsOwnerOrReadOnly, IsAdminOrReadOnly, IsContributorOrReadOnly
 from metta.metta_engine import metta_engine
 from agents.asi1_governance import ASIExplainAgent
 

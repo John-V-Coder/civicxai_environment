@@ -8,9 +8,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db.models import Q
-from .models import DataSource
-from .permissions import IsAdminOnly
-from .serializers import (
+from ..models import DataSource
+from ..permissions import IsAdminOnly
+from ..serializers import (
     DataSourceSerializer,
     DataSourceListSerializer,
     DataSourceCreateSerializer

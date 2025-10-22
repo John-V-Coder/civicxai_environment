@@ -93,7 +93,7 @@ class GatewayAllocationRequestView(APIView):
         except httpx.ConnectError as e:
             # Fallback to local MeTTa calculation
             try:
-                from .metta_service import calculate_priority
+                from ...metta.metta_service import calculate_priority
                 
                 priority_score = calculate_priority(
                     poverty_index=form_data['poverty_index'],
@@ -214,7 +214,7 @@ class GatewayExplanationRequestView(APIView):
         except httpx.ConnectError as e:
             # Fallback to local explanation generation
             try:
-                from .metta_service import generate_explanation_from_data
+                from ...metta.metta_service import generate_explanation_from_data
                 import json
                 
                 # Parse allocation_data

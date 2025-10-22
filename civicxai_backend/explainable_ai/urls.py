@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import (
+from .views.views import (
     CalculatePriorityView,
     HealthCheckView,
     GenerateExplanationAPIView,
@@ -12,7 +12,7 @@ from .views import (
     EventViewSet,
     VoteViewSet
 )
-from .auth_views import (
+from .views.auth_views import (
     CustomTokenObtainPairView,
     RegisterView,
     LogoutView,
@@ -23,22 +23,22 @@ from .auth_views import (
     DashboardOverviewView,
     check_auth_status
 )
-from .gateway_views import (
+from .views.gateway_views import (
     GatewayAllocationRequestView,
     GatewayExplanationRequestView,
     GatewayStatusView,
     GatewayHealthView,
     GatewayMetricsView
 )
-from .chat_views import AIChatView
-from .datasource_views import DataSourceViewSet
-from .allocation_request_views import (
+from .views.chat_views import AIChatView
+from .views.datasource_views import DataSourceViewSet
+from .views.allocation_request_views import (
     AllocationRequestListView,
     AllocationRequestCreateView,
     AllocationRequestDetailView,
     AllocationRequestStatsView
 )
-from .explanation_request_views import (
+from .views.explanation_request_views import (
     ExplanationRequestListView,
     ExplanationRequestCreateView,
     ExplanationRequestDetailView,

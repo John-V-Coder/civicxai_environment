@@ -7,13 +7,13 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from .serializers import (
+from ..serializers import (
     CustomTokenObtainPairSerializer,
     UserRegistrationSerializer,
     UserProfileSerializer,
     DashboardMetricsSerializer
 )
-from .models import DashboardMetrics
+from ..models import DashboardMetrics
 
 User = get_user_model()
 
@@ -150,7 +150,7 @@ class ChangePasswordView(APIView):
 #  User Management Views
 # =====================================================
 
-from .serializers import (
+from ..serializers import (
     CustomTokenObtainPairSerializer,
     UserRegistrationSerializer,
     UserProfileSerializer,
@@ -236,7 +236,7 @@ class DashboardOverviewView(APIView):
         metrics = DashboardMetrics.calculate_today_metrics()
         
         # Get recent events
-        from .models import Event, User, Proposal
+        from ..models import Event, User, Proposal
         from datetime import datetime, timedelta
         
         recent_events = Event.objects.filter(
