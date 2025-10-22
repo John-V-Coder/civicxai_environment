@@ -24,6 +24,7 @@ import {
 import { useGateway } from '@/hooks/useGateway';
 import { toast } from 'sonner';
 import AIGatewayChat from './AIGatewayChat';
+import { allocationRequestsAPI, explanationRequestsAPI } from '@/services/api';
 
 const AIGateway = () => {
   const { 
@@ -72,6 +73,13 @@ const AIGateway = () => {
 
   const handleAllocationSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate region ID is not empty
+    if (!allocationForm.region_id || allocationForm.region_id.trim() === '') {
+      toast.error('Please enter a Region ID before submitting');
+      return;
+    }
+    
     setResult(null);
     setRequestId(null);
 
@@ -87,7 +95,23 @@ const AIGateway = () => {
         urls: allocationForm.urls
       };
 
-      // Submit request
+      // Save allocation request to database first
+      const savedRequest = await allocationRequestsAPI.create({
+        region_id: data.region_id,
+        region_name: data.region_id, // Will be displayed as title
+        poverty_index: data.poverty_index,
+        project_impact: data.project_impact,
+        environmental_score: data.environmental_score,
+        corruption_risk: data.corruption_risk,
+        notes: data.notes,
+        urls: data.urls,
+        files_attached: files.length,
+        status: 'processing'
+      });
+
+      toast.success('Allocation request saved to dashboard!');
+
+      // Submit request to Gateway for AI analysis
       const response = await requestAllocation(data, files);
       setRequestId(response.request_id);
       toast.success('Request submitted to AI Gateway');
@@ -101,16 +125,48 @@ const AIGateway = () => {
         }
       });
 
+      // Update the saved request with AI results
+      if (finalResult && savedRequest.data?.request_id) {
+        await allocationRequestsAPI.update(savedRequest.data.request_id, {
+          status: 'analyzed',
+          priority_level: finalResult.recommendation?.priority_level,
+          confidence_score: finalResult.recommendation?.confidence_score,
+          recommended_allocation_percentage: finalResult.recommendation?.recommended_allocation_percentage,
+          ai_recommendation: finalResult.recommendation?.rationale,
+          key_findings: finalResult.recommendation?.key_findings || [],
+          recommendations: finalResult.recommendation?.recommendations || []
+        });
+      }
+
       setResult(finalResult);
-      toast.success('AI analysis completed!');
+      toast.success('AI analysis completed and saved!');
     } catch (err) {
       console.error('Allocation request error:', err);
+      console.error('Error response:', err.response?.data);
       
       // Handle gateway not running
       if (err.response?.status === 503) {
         toast.error('AI Gateway is not running. Please start the gateway server or use the MeTTa Calculator instead.', {
           duration: 5000
         });
+        return;
+      }
+      
+      // Handle database save errors (400)
+      if (err.response?.status === 400 && err.response?.data) {
+        const errorData = err.response.data;
+        const errorMessage = errorData.error || errorData.message || 'Failed to save allocation request';
+        toast.error(`Error: ${errorMessage}`, {
+          duration: 5000
+        });
+        
+        // Log detailed error for debugging
+        if (errorData.traceback) {
+          console.error('Backend traceback:', errorData.traceback);
+        }
+        if (errorData.received_data) {
+          console.error('Data received by backend:', errorData.received_data);
+        }
         return;
       }
       
@@ -135,7 +191,21 @@ const AIGateway = () => {
         notes: explanationForm.notes
       };
 
-      // Submit request
+      // Save explanation request to database first
+      const savedRequest = await explanationRequestsAPI.create({
+        region_id: data.region_id,
+        region_name: data.region_id, // Will be displayed as title
+        allocation_data: data.allocation_data,
+        context: data.context,
+        language: data.language,
+        notes: data.notes,
+        files_attached: files.length,
+        status: 'processing'
+      });
+
+      toast.success('Explanation request saved to dashboard!');
+
+      // Submit request to Gateway for AI processing
       const response = await requestExplanation(data, files);
       setRequestId(response.request_id);
       toast.success('Explanation request submitted');
@@ -149,8 +219,19 @@ const AIGateway = () => {
         }
       });
 
+      // Update the saved request with AI results
+      if (finalResult && savedRequest.data?.request_id) {
+        await explanationRequestsAPI.update(savedRequest.data.request_id, {
+          status: 'completed',
+          explanation_text: finalResult.explanation?.text || '',
+          key_points: finalResult.explanation?.key_points || [],
+          policy_implications: finalResult.explanation?.policy_implications || [],
+          transparency_score: finalResult.explanation?.transparency_score || 0
+        });
+      }
+
       setResult(finalResult);
-      toast.success('Explanation generated!');
+      toast.success('Explanation generated and saved!');
     } catch (err) {
       console.error('Explanation request error:', err);
       

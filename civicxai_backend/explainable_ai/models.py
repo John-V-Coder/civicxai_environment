@@ -474,3 +474,171 @@ class DataSource(models.Model):
         elif self.file:
             return self.file.url
         return None
+
+
+# =====================================================
+# AI Gateway Allocation Requests
+# =====================================================
+
+class AllocationRequest(models.Model):
+    """
+    Stores allocation requests submitted through AI Gateway
+    Displays in dashboard as proposals
+    """
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending Analysis'),
+        ('processing', 'Being Processed'),
+        ('analyzed', 'Analysis Complete'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    
+    # Request identification
+    request_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    region_id = models.CharField(max_length=100, db_index=True)
+    region_name = models.CharField(max_length=200, help_text="Human-readable region name")
+    
+    # Metrics submitted
+    poverty_index = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)])
+    project_impact = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)])
+    environmental_score = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)])
+    corruption_risk = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)])
+    
+    # Additional context
+    notes = models.TextField(blank=True)
+    urls = models.TextField(blank=True, help_text="Reference URLs, one per line")
+    
+    # AI Analysis Results
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    priority_score = models.FloatField(null=True, blank=True)
+    priority_level = models.CharField(max_length=50, blank=True)
+    confidence_score = models.FloatField(null=True, blank=True)
+    recommended_allocation_percentage = models.FloatField(null=True, blank=True)
+    
+    # AI Recommendations
+    ai_recommendation = models.TextField(blank=True)
+    key_findings = models.JSONField(default=list, blank=True)
+    recommendations = models.JSONField(default=list, blank=True)
+    
+    # Files attached
+    files_attached = models.IntegerField(default=0)
+    file_paths = models.JSONField(default=list, blank=True)
+    
+    # Tracking
+    submitted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    analyzed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', '-created_at']),
+            models.Index(fields=['region_id']),
+        ]
+    
+    def __str__(self):
+        return f"{self.region_name} - {self.region_id} ({self.get_status_display()})"
+    
+    def get_metrics_dict(self):
+        """Return metrics as dictionary for display"""
+        return {
+            'poverty_index': self.poverty_index,
+            'project_impact': self.project_impact,
+            'environmental_score': self.environmental_score,
+            'corruption_risk': self.corruption_risk,
+        }
+    
+    def update_from_gateway_result(self, result_data):
+        """Update with results from Gateway API"""
+        if not result_data:
+            return
+        
+        recommendation = result_data.get('recommendation', {})
+        self.status = 'analyzed'
+        self.analyzed_at = timezone.now()
+        
+        self.priority_level = recommendation.get('priority_level', '')
+        self.confidence_score = recommendation.get('confidence_score', 0)
+        self.recommended_allocation_percentage = recommendation.get('recommended_allocation_percentage', 0)
+        self.ai_recommendation = recommendation.get('rationale', '')
+        self.key_findings = recommendation.get('key_findings', [])
+        self.recommendations = recommendation.get('recommendations', [])
+        
+        self.save()
+
+
+class ExplanationRequest(models.Model):
+    """
+    Stores explanation requests submitted through AI Gateway
+    Displays in dashboard alongside allocation requests
+    """
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending Generation'),
+        ('processing', 'Being Processed'),
+        ('completed', 'Explanation Ready'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    
+    LANGUAGE_CHOICES = [
+        ('technical', 'Technical'),
+        ('simple', 'Simple'),
+        ('policy', 'Policy-focused'),
+    ]
+    
+    # Request identification
+    request_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    region_id = models.CharField(max_length=100, db_index=True)
+    region_name = models.CharField(max_length=200, help_text="Human-readable region name", blank=True)
+    
+    # Request details
+    allocation_data = models.JSONField(default=dict, blank=True, help_text="Allocation data to explain")
+    context = models.TextField(blank=True, help_text="Additional context for explanation")
+    language = models.CharField(max_length=20, choices=LANGUAGE_CHOICES, default='simple')
+    notes = models.TextField(blank=True)
+    
+    # AI Generated Explanation
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    explanation_text = models.TextField(blank=True, help_text="Generated explanation")
+    key_points = models.JSONField(default=list, blank=True)
+    policy_implications = models.JSONField(default=list, blank=True)
+    transparency_score = models.FloatField(null=True, blank=True)
+    
+    # Files attached
+    files_attached = models.IntegerField(default=0)
+    file_paths = models.JSONField(default=list, blank=True)
+    
+    # Tracking
+    submitted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', '-created_at']),
+            models.Index(fields=['region_id']),
+        ]
+    
+    def __str__(self):
+        return f"Explanation for {self.region_name or self.region_id} ({self.get_status_display()})"
+    
+    def update_from_gateway_result(self, result_data):
+        """Update with results from Gateway API"""
+        if not result_data:
+            return
+        
+        explanation = result_data.get('explanation', {})
+        self.status = 'completed'
+        self.completed_at = timezone.now()
+        
+        self.explanation_text = explanation.get('text', '')
+        self.key_points = explanation.get('key_points', [])
+        self.policy_implications = explanation.get('policy_implications', [])
+        self.transparency_score = explanation.get('transparency_score', 0)
+        
+        self.save()

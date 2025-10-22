@@ -259,4 +259,46 @@ export const dataSourcesAPI = {
   getStats: () => api.get('/data-sources/stats/'),
 };
 
+// Allocation Requests API
+export const allocationRequestsAPI = {
+  // List all allocation requests
+  list: (params) => publicAPI.get('/allocation-requests/', { params }),
+  
+  // Create new allocation request
+  create: (data) => publicAPI.post('/allocation-requests/create/', data),
+  
+  // Get specific allocation request
+  get: (requestId) => publicAPI.get(`/allocation-requests/${requestId}/`),
+  
+  // Update allocation request
+  update: (requestId, data) => publicAPI.put(`/allocation-requests/${requestId}/`, data),
+  
+  // Delete allocation request
+  delete: (requestId) => publicAPI.delete(`/allocation-requests/${requestId}/`),
+  
+  // Get statistics
+  stats: () => publicAPI.get('/allocation-requests/stats/'),
+};
+
+// Explanation Requests API
+export const explanationRequestsAPI = {
+  // List all explanation requests
+  list: (params) => publicAPI.get('/explanation-requests/', { params }),
+  
+  // Create new explanation request
+  create: (data) => publicAPI.post('/explanation-requests/create/', data),
+  
+  // Get specific explanation request
+  get: (requestId) => publicAPI.get(`/explanation-requests/${requestId}/`),
+  
+  // Update explanation request
+  update: (requestId, data) => publicAPI.put(`/explanation-requests/${requestId}/`, data),
+  
+  // Delete explanation request
+  delete: (requestId) => publicAPI.delete(`/explanation-requests/${requestId}/`),
+  
+  // Get statistics
+  stats: () => publicAPI.get('/explanation-requests/stats/'),
+};
+
 export default api;

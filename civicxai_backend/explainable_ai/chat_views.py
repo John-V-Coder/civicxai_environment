@@ -1,6 +1,7 @@
 """
 AI Chat Views
 Handles general chat messages and routes them to appropriate AI services
+Enhanced with Cognitive Orchestrator (Phase 4)
 """
 import os
 import re
@@ -14,6 +15,12 @@ from django.db.models import Q
 from dotenv import load_dotenv
 from metta.metta_engine import metta_engine
 from .models import DataSource
+
+# Phase 4: Cognitive AI Integration
+from cognitive.orchestrator import get_orchestrator, RoutingDecision
+from cognitive.hybrid_responder import get_hybrid_responder
+from cognitive.reasoner import get_reasoner
+from cognitive.knowledge_store import get_knowledge_store
 
 load_dotenv()
 
@@ -208,8 +215,35 @@ class AIChatView(APIView):
         return metrics
     
     def _process_by_intent(self, message, intent, request):
-        """Process message based on detected intent"""
+        """
+        Process message based on detected intent
+        Enhanced with Phase 4 Cognitive Orchestrator
+        """
+        # Phase 4: Use cognitive orchestrator for intelligent routing
+        orchestrator = get_orchestrator()
+        routing_decision = orchestrator.route_query(message)
         
+        routing = routing_decision['routing']
+        analysis = routing_decision['analysis']
+        
+        # Log routing decision
+        print(f"🧠 Cognitive Orchestrator: {routing.value} ({routing_decision['rationale']})")
+        
+        # Check for document queries first (Phase 4 key deliverable)
+        if analysis['requires_documents']:
+            return self._handle_document_query(message, analysis)
+        
+        # Route based on orchestrator decision
+        if routing == RoutingDecision.COGNITIVE:
+            return self._handle_cognitive_reasoning(message, analysis)
+        
+        elif routing == RoutingDecision.HYBRID_METTA:
+            return self._handle_hybrid_metta(message, analysis)
+        
+        elif routing == RoutingDecision.HYBRID_GATEWAY:
+            return self._handle_hybrid_gateway(message, analysis)
+        
+        # Traditional routing for simple cases
         if intent == 'calculate_priority':
             return self._handle_priority_calculation(message)
         
@@ -493,3 +527,168 @@ class AIChatView(APIView):
         response += "You can ask me to calculate priorities, analyze regions, explain decisions, or check system status."
         
         return {'content': response}
+    
+    # ===== Phase 4: Cognitive Orchestrator Handlers =====
+    
+    def _handle_document_query(self, message, analysis):
+        """
+        Handle document queries like "What documents mention poverty?"
+        Phase 4 key deliverable
+        """
+        try:
+            knowledge_store = get_knowledge_store()
+            reasoner = get_reasoner()
+            
+            # Extract search terms
+            keywords = analysis['keywords']
+            
+            # Find relevant sources
+            matching_sources = []
+            for keyword in keywords:
+                try:
+                    # Search in knowledge base
+                    sources = knowledge_store.find_sources_for_topic(keyword)
+                    matching_sources.extend(sources)
+                except:
+                    # Fallback to DataSource model
+                    sources = self._get_relevant_sources(message, limit=5)
+                    matching_sources.extend([s.title if hasattr(s, 'title') else str(s) for s in sources])
+            
+            # Remove duplicates
+            unique_sources = list(set(matching_sources))
+            
+            # Build response with reasoning
+            response = f"**Document Search Results**\n\n"
+            response += f"Found **{len(unique_sources)} documents** mentioning: {', '.join(keywords)}\n\n"
+            
+            if unique_sources:
+                response += "**Documents:**\n"
+                for idx, source in enumerate(unique_sources[:10], 1):
+                    source_name = source if isinstance(source, str) else str(source)
+                    response += f"{idx}. {source_name}\n"
+                
+                response += f"\n**Reasoning:**\n"
+                response += f"• Searched knowledge base for keywords: {', '.join(keywords)}\n"
+                response += f"• Found {len(unique_sources)} relevant documents\n"
+                response += f"• Results ranked by relevance and usage\n\n"
+                
+                if len(unique_sources) > 10:
+                    response += f"_Showing top 10 of {len(unique_sources)} results_\n"
+            else:
+                response += "No documents found matching your query.\n\n"
+                response += "**Suggestion:** Try different keywords or upload relevant documents."
+            
+            # Add confidence
+            confidence_level = "high" if len(unique_sources) >= 3 else "medium" if len(unique_sources) > 0 else "low"
+            response += f"\n**Confidence:** {confidence_level.title()}"
+            
+            return {'content': response}
+            
+        except Exception as e:
+            return {
+                'content': f"Failed to search documents: {str(e)}\n\nPlease try rephrasing your query."
+            }
+    
+    def _handle_cognitive_reasoning(self, message, analysis):
+        """Handle queries requiring complex cognitive reasoning"""
+        try:
+            reasoner = get_reasoner()
+            
+            # Determine reasoning type
+            if analysis['requires_multi_hop']:
+                # Multi-hop inference
+                keywords = analysis['keywords']
+                if len(keywords) >= 2:
+                    result = reasoner.multi_hop_inference(keywords[0], keywords[-1])
+                    if result.get('success'):
+                        response = f"**Reasoning Result**\n\n"
+                        response += f"Found connection: {keywords[0]} → {keywords[-1]}\n\n"
+                        
+                        steps = result.get('steps', [])
+                        if steps:
+                            response += "**Reasoning Chain:**\n"
+                            for step in steps:
+                                response += f"• {step.get('premise', '')} → {step.get('conclusion', '')}\n"
+                        
+                        return {'content': response}
+            
+            # Default cognitive response
+            response = "**Cognitive Analysis**\n\n"
+            response += "This query requires complex reasoning. "
+            response += f"Analyzing: {', '.join(analysis['keywords'])}\n\n"
+            
+            # Get related concepts
+            if analysis['keywords']:
+                related = reasoner.find_related_concepts(analysis['keywords'][0])
+                if related:
+                    response += f"**Related Concepts:** {', '.join(related[:5])}\n"
+            
+            return {'content': response}
+            
+        except Exception as e:
+            return {
+                'content': f"Cognitive reasoning failed: {str(e)}\n\nTrying simpler analysis..."
+            }
+    
+    def _handle_hybrid_metta(self, message, analysis):
+        """Handle queries needing MeTTa calculation + OpenCog reasoning"""
+        try:
+            hybrid_responder = get_hybrid_responder()
+            
+            # First, do MeTTa calculation
+            metta_result = self._handle_priority_calculation(message)
+            
+            # Then enhance with reasoning
+            context = {
+                'region_id': 'Query_Region',
+                'priority_score': 0.75  # Placeholder
+            }
+            
+            enhanced_result = hybrid_responder.combine_metta_with_reasoning(
+                {'priority_score': 0.75}, message, context
+            )
+            
+            if enhanced_result.get('success'):
+                response = enhanced_result.get('explanation', metta_result['content'])
+                
+                # Add sources if available
+                if enhanced_result.get('sources'):
+                    response += self._format_sources_reference(enhanced_result['sources'])
+                
+                return {'content': response}
+            else:
+                return metta_result
+            
+        except Exception as e:
+            # Fallback to basic MeTTa
+            return self._handle_priority_calculation(message)
+    
+    def _handle_hybrid_gateway(self, message, analysis):
+        """Handle queries needing Gateway analysis + OpenCog reasoning"""
+        try:
+            hybrid_responder = get_hybrid_responder()
+            
+            # Try Gateway first
+            gateway_result = self._handle_analysis(message, None)
+            
+            # Enhance with reasoning
+            context = {'topics': analysis['keywords']}
+            
+            enhanced_result = hybrid_responder.combine_gateway_with_reasoning(
+                gateway_result, message, context
+            )
+            
+            if enhanced_result.get('success'):
+                response = enhanced_result.get('explanation', gateway_result['content'])
+                
+                # Add sources
+                if enhanced_result.get('sources'):
+                    response += self._format_sources_reference(enhanced_result['sources'][:3])
+                
+                return {'content': response}
+            else:
+                return gateway_result
+            
+        except Exception as e:
+            # Fallback to basic analysis
+            return self._handle_analysis(message, None)

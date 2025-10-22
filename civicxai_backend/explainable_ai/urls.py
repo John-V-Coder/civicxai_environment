@@ -32,6 +32,18 @@ from .gateway_views import (
 )
 from .chat_views import AIChatView
 from .datasource_views import DataSourceViewSet
+from .allocation_request_views import (
+    AllocationRequestListView,
+    AllocationRequestCreateView,
+    AllocationRequestDetailView,
+    AllocationRequestStatsView
+)
+from .explanation_request_views import (
+    ExplanationRequestListView,
+    ExplanationRequestCreateView,
+    ExplanationRequestDetailView,
+    ExplanationRequestStatsView
+)
 
 # =====================================================
 # DRF Router for ViewSets
@@ -79,6 +91,21 @@ urlpatterns = [
 
     # ===== AI Chat =====
     path('chat/', AIChatView.as_view(), name='ai_chat'),
+
+    # ===== Allocation Requests =====
+    path('allocation-requests/', AllocationRequestListView.as_view(), name='allocation_request_list'),
+    path('allocation-requests/create/', AllocationRequestCreateView.as_view(), name='allocation_request_create'),
+    path('allocation-requests/stats/', AllocationRequestStatsView.as_view(), name='allocation_request_stats'),
+    path('allocation-requests/<uuid:request_id>/', AllocationRequestDetailView.as_view(), name='allocation_request_detail'),
+
+    # ===== Explanation Requests =====
+    path('explanation-requests/', ExplanationRequestListView.as_view(), name='explanation_request_list'),
+    path('explanation-requests/create/', ExplanationRequestCreateView.as_view(), name='explanation_request_create'),
+    path('explanation-requests/stats/', ExplanationRequestStatsView.as_view(), name='explanation_request_stats'),
+    path('explanation-requests/<uuid:request_id>/', ExplanationRequestDetailView.as_view(), name='explanation_request_detail'),
+
+    # ===== Cognitive AI (OpenCog) =====
+    path('cognitive/', include('cognitive.urls', namespace='cognitive')),
 
     # ===== Include ViewSet Routers =====
     path('', include(router.urls)),
