@@ -96,6 +96,7 @@ urlpatterns = [
     path('allocation-requests/', AllocationRequestListView.as_view(), name='allocation_request_list'),
     path('allocation-requests/create/', AllocationRequestCreateView.as_view(), name='allocation_request_create'),
     path('allocation-requests/stats/', AllocationRequestStatsView.as_view(), name='allocation_request_stats'),
+    path('allocation-requests/<int:pk>/', AllocationRequestDetailView.as_view(), name='allocation_request_detail_pk'),
     path('allocation-requests/<uuid:request_id>/', AllocationRequestDetailView.as_view(), name='allocation_request_detail'),
 
     # ===== Explanation Requests =====
@@ -104,8 +105,8 @@ urlpatterns = [
     path('explanation-requests/stats/', ExplanationRequestStatsView.as_view(), name='explanation_request_stats'),
     path('explanation-requests/<uuid:request_id>/', ExplanationRequestDetailView.as_view(), name='explanation_request_detail'),
 
-    # ===== Cognitive AI (OpenCog) =====
-    path('cognitive/', include('cognitive.urls', namespace='cognitive')),
+    # Note: Cognitive AI endpoints are included at root level in civicxai_backend/urls.py
+    # path('api/cognitive/', ...) is handled there to avoid duplicate namespace
 
     # ===== Include ViewSet Routers =====
     path('', include(router.urls)),

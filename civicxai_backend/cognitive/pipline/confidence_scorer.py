@@ -5,7 +5,7 @@ Calculates confidence scores for reasoning and decisions
 import logging
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
-from .pln_rules import TruthValue, get_pln_engine
+from cognitive.pln.pln_rules import TruthValue, get_pln_engine
 
 logger = logging.getLogger(__name__)
 

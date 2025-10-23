@@ -14,6 +14,6 @@ class CognitiveConfig(AppConfig):
         Called when Django starts
         Register signal handlers here
         """
-        # Import signals to register them
-        from . import signals
-        signals.register_signals()
+        # Import signals to register them (use direct import to avoid __init__ cascade)
+        from cognitive.core.signals import register_signals
+        register_signals()

@@ -5,8 +5,8 @@ Creates structured representations of reasoning chains for explanation
 import logging
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
-from .pln_rules import TruthValue
-from .confidence_scorer import get_confidence_scorer
+from cognitive.pln.pln_rules import TruthValue
+from cognitive.pipline.confidence_scorer import get_confidence_scorer
 
 logger = logging.getLogger(__name__)
 

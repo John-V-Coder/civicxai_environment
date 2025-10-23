@@ -13,9 +13,9 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'civicxai_backend.settings')
 import django
 django.setup()
 
-from cognitive.orchestrator import get_orchestrator, QueryComplexity, RoutingDecision
-from cognitive.hybrid_responder import get_hybrid_responder
-from cognitive.knowledge_store import get_knowledge_store
+from cognitive.orchestrator.orchestrator import get_orchestrator, QueryComplexity, RoutingDecision
+from cognitive.core.hybrid_responder import get_hybrid_responder
+from cognitive.knowledge.knowledge_store import get_knowledge_store
 
 
 class TestPhase4Integration:

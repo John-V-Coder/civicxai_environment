@@ -5,11 +5,11 @@ Enhanced with PLN rules, confidence scoring, and reasoning chains
 """
 import logging
 from typing import List, Dict, Any, Optional
-from .atomspace_manager import get_atomspace_manager
-from .knowledge_store import get_knowledge_store
-from .pln_rules import get_pln_engine, TruthValue
-from .confidence_scorer import get_confidence_scorer
-from .reasoning_chain import get_chain_builder, ReasoningChain
+from cognitive.atoms.atomspace_manager import get_atomspace_manager
+from cognitive.knowledge.knowledge_store import get_knowledge_store
+from cognitive.pln.pln_rules import get_pln_engine, TruthValue
+from cognitive.pipline.confidence_scorer import get_confidence_scorer
+from cognitive.reasoner.reasoning_chain import get_chain_builder, ReasoningChain
 
 logger = logging.getLogger(__name__)
 

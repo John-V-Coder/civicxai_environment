@@ -5,8 +5,8 @@ Discovers and reasons about causal relationships
 import logging
 from typing import Dict, List, Any, Optional, Tuple, Set
 from dataclasses import dataclass
-from .pln_rules import TruthValue
-from .atomspace_manager import get_atomspace_manager
+from cognitive.pln.pln_rules import TruthValue
+from cognitive.atoms.atomspace_manager import get_atomspace_manager
 
 logger = logging.getLogger(__name__)
 

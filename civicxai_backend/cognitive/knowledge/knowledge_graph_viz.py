@@ -4,9 +4,9 @@ Generates visualization data for the knowledge graph
 """
 import logging
 from typing import Dict, List, Any, Set, Optional, Tuple
-from .atomspace_manager import get_atomspace_manager
-from .knowledge_store import get_knowledge_store
-from .causal_inference import get_causal_inference
+from cognitive.atoms.atomspace_manager import get_atomspace_manager
+from cognitive.knowledge.knowledge_store import get_knowledge_store
+from cognitive.pipline.causal_inference import get_causal_inference
 
 logger = logging.getLogger(__name__)
 

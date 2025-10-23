@@ -17,7 +17,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+# Use absolute path to avoid slow WSL path resolution
+BASE_DIR = Path(__file__).absolute().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
@@ -48,6 +49,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'metta',
     'uagents',
+    'cognitive.apps.CognitiveConfig',  # Cognitive AI module
 ]
 
 MIDDLEWARE = [

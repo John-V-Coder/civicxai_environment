@@ -6,9 +6,9 @@ import logging
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 
-from .processors.pdf_processor import get_pdf_processor
-from .processors.concept_extractor import get_concept_extractor
-from .processors.atom_generator import get_atom_generator
+from cognitive.processors.pdf_processor import get_pdf_processor
+from cognitive.processors.concept_extractor import get_concept_extractor
+from cognitive.atoms.atom_generator import get_atom_generator
 
 logger = logging.getLogger(__name__)
 

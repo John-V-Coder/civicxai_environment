@@ -44,7 +44,7 @@ def check_requirements():
             print(f"  {cmd}")
         return False
     
-    print("\n✅ All requirements satisfied!")
+    print("\n All requirements satisfied!")
     return True
 
 def check_env_files():
@@ -73,7 +73,7 @@ def check_env_files():
     if provider_env.exists():
         with open(provider_env) as f:
             if "OPENAI_API_KEY=your_" in f.read() or "OPENAI_API_KEY=" not in f.read():
-                print("\n⚠️  WARNING: OpenAI API key not configured!")
+                print("\n WARNING: OpenAI API key not configured!")
                 print("  Add your key to uagents_ai_provider/.env")
                 return False
     

@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
-from .atomspace_manager import get_atomspace_manager
+from cognitive.atoms.atomspace_manager import get_atomspace_manager
 
 logger = logging.getLogger(__name__)
 

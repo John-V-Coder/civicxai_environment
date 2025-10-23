@@ -13,9 +13,9 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'civicxai_backend.settings')
 import django
 django.setup()
 
-from cognitive.atomspace_manager import get_atomspace_manager
-from cognitive.knowledge_store import get_knowledge_store
-from cognitive.reasoner import get_reasoner
+from cognitive.atoms.atomspace_manager import get_atomspace_manager
+from cognitive.knowledge.knowledge_store import get_knowledge_store
+from cognitive.reasoner.reasoner import get_reasoner
 
 
 class TestCognitiveSystem:

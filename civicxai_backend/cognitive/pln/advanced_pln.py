@@ -5,8 +5,8 @@ Full implementation with forward/backward chaining and inference control
 import logging
 from typing import Dict, List, Any, Optional, Set, Tuple
 from dataclasses import dataclass
-from .pln_rules import TruthValue, get_pln_engine
-from .atomspace_manager import get_atomspace_manager
+from cognitive.pln.pln_rules import TruthValue, get_pln_engine
+from cognitive.atoms.atomspace_manager import get_atomspace_manager
 
 logger = logging.getLogger(__name__)
 

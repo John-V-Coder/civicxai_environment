@@ -17,10 +17,10 @@ from metta.metta_engine import metta_engine
 from ..models import DataSource
 
 # Phase 4: Cognitive AI Integration
-from cognitive.orchestrator import get_orchestrator, RoutingDecision
-from cognitive.hybrid_responder import get_hybrid_responder
-from cognitive.reasoner import get_reasoner
-from cognitive.knowledge_store import get_knowledge_store
+from cognitive.orchestrator.orchestrator import get_orchestrator, RoutingDecision
+from cognitive.core.hybrid_responder import get_hybrid_responder
+from cognitive.reasoner.reasoner import get_reasoner
+from cognitive.knowledge.knowledge_store import get_knowledge_store
 
 load_dotenv()
 

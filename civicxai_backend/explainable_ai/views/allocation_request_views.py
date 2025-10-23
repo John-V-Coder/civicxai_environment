@@ -46,6 +46,7 @@ class AllocationRequestListView(APIView):
         data = [
             {
                 'id': str(req.request_id),
+                'pk': req.pk,
                 'region_id': req.region_id,
                 'region_name': req.region_name,
                 'status': req.status,
@@ -159,14 +160,19 @@ class AllocationRequestDetailView(APIView):
     """
     permission_classes = [AllowAny]
     
-    def get(self, request, request_id):
+    def get(self, request, pk=None, request_id=None):
         try:
-            allocation_request = AllocationRequest.objects.get(request_id=request_id)
+            # Support both integer pk and UUID request_id
+            if pk is not None:
+                allocation_request = AllocationRequest.objects.get(pk=pk)
+            else:
+                allocation_request = AllocationRequest.objects.get(request_id=request_id)
             
             return Response({
                 'success': True,
                 'data': {
                     'id': str(allocation_request.request_id),
+                    'pk': allocation_request.pk,
                     'region_id': allocation_request.region_id,
                     'region_name': allocation_request.region_name,
                     'status': allocation_request.status,
@@ -191,10 +197,14 @@ class AllocationRequestDetailView(APIView):
                 'error': 'Allocation request not found'
             }, status=status.HTTP_404_NOT_FOUND)
     
-    def put(self, request, request_id):
+    def put(self, request, pk=None, request_id=None):
         """Update allocation request with AI analysis results"""
         try:
-            allocation_request = AllocationRequest.objects.get(request_id=request_id)
+            # Support both integer pk and UUID request_id
+            if pk is not None:
+                allocation_request = AllocationRequest.objects.get(pk=pk)
+            else:
+                allocation_request = AllocationRequest.objects.get(request_id=request_id)
             data = request.data
             
             # Update fields
@@ -236,10 +246,14 @@ class AllocationRequestDetailView(APIView):
                 'error': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
     
-    def delete(self, request, request_id):
+    def delete(self, request, pk=None, request_id=None):
         """Delete an allocation request"""
         try:
-            allocation_request = AllocationRequest.objects.get(request_id=request_id)
+            # Support both integer pk and UUID request_id
+            if pk is not None:
+                allocation_request = AllocationRequest.objects.get(pk=pk)
+            else:
+                allocation_request = AllocationRequest.objects.get(request_id=request_id)
             allocation_request.delete()
             
             return Response({

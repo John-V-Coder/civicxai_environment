@@ -4,8 +4,8 @@ Converts extracted concepts and relationships into AtomSpace atoms
 """
 import logging
 from typing import List, Dict, Any, Optional
-from ..atomspace_manager import get_atomspace_manager
-from ..knowledge_store import get_knowledge_store
+from cognitive.atoms.atomspace_manager import get_atomspace_manager
+from cognitive.knowledge.knowledge_store import get_knowledge_store
 
 logger = logging.getLogger(__name__)
 

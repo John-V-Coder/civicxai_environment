@@ -16,8 +16,8 @@ django.setup()
 
 from cognitive.processors.pdf_processor import get_pdf_processor
 from cognitive.processors.concept_extractor import get_concept_extractor
-from cognitive.processors.atom_generator import get_atom_generator
-from cognitive.ingestion_pipeline import get_ingestion_pipeline
+from cognitive.atoms.atom_generator import AtomGenerator, get_atom_generator
+from cognitive.pipline.ingestion_pipeline import get_ingestion_pipeline
 
 
 class TestIngestionPipeline:

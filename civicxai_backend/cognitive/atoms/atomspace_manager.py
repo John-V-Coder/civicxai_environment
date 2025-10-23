@@ -4,7 +4,23 @@ Handles connection and basic operations with OpenCog's AtomSpace
 """
 import logging
 from typing import Optional, List, Dict, Any
-from hyperon import *
+
+try:
+    from hyperon import MeTTa
+    HYPERON_AVAILABLE = True
+except ImportError as e:
+    HYPERON_AVAILABLE = False
+    logging.warning(f"Hyperon not available: {e}. AtomSpace features will be limited.")
+    # Create a mock MeTTa class for when hyperon is not available
+    class MeTTa:
+        def __init__(self):
+            self._space = {}
+        
+        def space(self):
+            return self._space
+        
+        def run(self, expr):
+            return []
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +33,19 @@ class AtomSpaceManager:
     
     def __init__(self):
         """Initialize AtomSpace instance"""
-        self.metta = MeTTa()
-        self.atomspace = self.metta.space()
-        logger.info("AtomSpace initialized successfully")
+        try:
+            self.metta = MeTTa()
+            self.atomspace = self.metta.space()
+            if HYPERON_AVAILABLE:
+                logger.info("AtomSpace initialized successfully with Hyperon")
+            else:
+                logger.warning("AtomSpace initialized with mock implementation (Hyperon not available)")
+        except Exception as e:
+            logger.error(f"Failed to initialize AtomSpace: {e}")
+            # Fallback to mock implementation
+            self.metta = MeTTa()
+            self.atomspace = self.metta.space()
+            logger.warning("Using mock AtomSpace implementation")
     
     def add_atom(self, atom_expr: str) -> bool:
         """
@@ -190,7 +216,8 @@ class AtomSpaceManager:
         return {
             'total_concepts': len(concepts),
             'status': 'active',
-            'backend': 'Hyperon/MeTTa'
+            'backend': 'Hyperon/MeTTa' if HYPERON_AVAILABLE else 'Mock (Hyperon not installed)',
+            'hyperon_available': HYPERON_AVAILABLE
         }
     
     def export_knowledge(self, filepath: str) -> bool:

@@ -6,7 +6,6 @@ import logging
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from explainable_ai.models import DataSource
-from .ingestion_pipeline import get_ingestion_pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +27,9 @@ def process_data_source(sender, instance, created, **kwargs):
     
     try:
         logger.info(f"Auto-processing DataSource: {instance.id} - {instance.title}")
+        
+        # Lazy import to avoid loading heavy dependencies during Django startup
+        from cognitive.pipline.ingestion_pipeline import get_ingestion_pipeline
         
         pipeline = get_ingestion_pipeline()
         source_id = f"DataSource_{instance.id}"

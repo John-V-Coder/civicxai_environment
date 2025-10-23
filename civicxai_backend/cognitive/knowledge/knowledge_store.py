@@ -4,7 +4,7 @@ High-level interface for storing domain-specific knowledge in AtomSpace
 """
 import logging
 from typing import Dict, List, Optional, Any
-from .atomspace_manager import get_atomspace_manager
+from cognitive.atoms.atomspace_manager import get_atomspace_manager
 
 logger = logging.getLogger(__name__)
 

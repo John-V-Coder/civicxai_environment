@@ -25,6 +25,13 @@ from .views import (
     KnowledgeGraphView
 )
 
+# Integration views for MeTTa/Gateway/ASI
+from .integration_views import (
+    HybridQueryView,
+    CognitiveRegionAnalysisView,
+    CognitiveKnowledgeIngestView
+)
+
 app_name = 'cognitive'
 
 urlpatterns = [
@@ -56,4 +63,9 @@ urlpatterns = [
     path('causal/', CausalInferenceView.as_view(), name='causal_inference'),
     path('learn/', LearningLoopView.as_view(), name='learning_loop'),
     path('graph/', KnowledgeGraphView.as_view(), name='knowledge_graph'),
+    
+    # Integration with MeTTa/Gateway/ASI (Phase 6: Full Integration)
+    path('query/hybrid/', HybridQueryView.as_view(), name='hybrid_query'),
+    path('region/analyze/', CognitiveRegionAnalysisView.as_view(), name='region_analysis'),
+    path('ingest/', CognitiveKnowledgeIngestView.as_view(), name='knowledge_ingest'),
 ]

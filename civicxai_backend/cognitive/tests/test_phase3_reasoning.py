@@ -13,10 +13,10 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'civicxai_backend.settings')
 import django
 django.setup()
 
-from cognitive.pln_rules import get_pln_engine, TruthValue
-from cognitive.confidence_scorer import get_confidence_scorer
-from cognitive.reasoning_chain import get_chain_builder
-from cognitive.reasoner import get_reasoner
+from cognitive.pln.pln_rules import get_pln_engine, TruthValue
+from cognitive.pipline.confidence_scorer import get_confidence_scorer
+from cognitive.reasoner.reasoning_chain import get_chain_builder
+from cognitive.reasoner.reasoner import get_reasoner
 
 
 class TestPhase3Reasoning:

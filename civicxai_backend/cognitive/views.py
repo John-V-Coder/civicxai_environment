@@ -8,10 +8,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from django.http import JsonResponse
 
-from .atomspace_manager import get_atomspace_manager
-from .knowledge_store import get_knowledge_store
-from .reasoner import get_reasoner
-from .ingestion_pipeline import get_ingestion_pipeline
+# Lazy imports - imported within methods to avoid loading heavy dependencies during Django startup
 
 
 class CognitiveHealthView(APIView):
@@ -23,6 +20,10 @@ class CognitiveHealthView(APIView):
     
     def get(self, request):
         try:
+            from .atoms.atomspace_manager import get_atomspace_manager
+            from .knowledge.knowledge_store import get_knowledge_store
+            from .reasoner.reasoner import get_reasoner
+            
             atomspace = get_atomspace_manager()
             knowledge = get_knowledge_store()
             reasoner = get_reasoner()
@@ -72,6 +73,7 @@ class AddConceptView(APIView):
                     'error': 'concept_name is required'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
+            from .atoms.atomspace_manager import get_atomspace_manager
             atomspace = get_atomspace_manager()
             
             # Add node
@@ -126,6 +128,7 @@ class AddRegionView(APIView):
                     'error': 'region_id is required'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
+            from .knowledge.knowledge_store import get_knowledge_store
             knowledge = get_knowledge_store()
             success = knowledge.add_region(region_id, region_data)
             
@@ -158,6 +161,7 @@ class QueryConceptsView(APIView):
         try:
             concept = request.query_params.get('concept')
             
+            from .atoms.atomspace_manager import get_atomspace_manager
             atomspace = get_atomspace_manager()
             
             if concept:
@@ -207,6 +211,7 @@ class ReasoningView(APIView):
                     'error': 'operation is required'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
+            from .reasoner.reasoner import get_reasoner
             reasoner = get_reasoner()
             
             # Route to appropriate reasoning operation
@@ -279,6 +284,7 @@ class KnowledgeStatsView(APIView):
     
     def get(self, request):
         try:
+            from .knowledge.knowledge_store import get_knowledge_store
             knowledge = get_knowledge_store()
             stats = knowledge.get_knowledge_stats()
             
@@ -318,6 +324,7 @@ class IngestPDFView(APIView):
             pdf_bytes = uploaded_file.read()
             
             # Process PDF
+            from .pipline.ingestion_pipeline import get_ingestion_pipeline
             pipeline = get_ingestion_pipeline()
             result = pipeline.process_pdf_bytes(pdf_bytes, uploaded_file.name, source_id)
             
@@ -361,6 +368,7 @@ class IngestTextView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Process text
+            from .pipline.ingestion_pipeline import get_ingestion_pipeline
             pipeline = get_ingestion_pipeline()
             result = pipeline.process_text(text, source_id)
             
@@ -384,6 +392,7 @@ class InitializeDomainKnowledgeView(APIView):
     
     def post(self, request):
         try:
+            from .pipline.ingestion_pipeline import get_ingestion_pipeline
             pipeline = get_ingestion_pipeline()
             result = pipeline.initialize_domain_knowledge()
             
@@ -422,6 +431,7 @@ class PLNReasoningView(APIView):
                     'error': 'goal is required'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
+            from .reasoner.reasoner import get_reasoner
             reasoner = get_reasoner()
             result = reasoner.reason_with_pln(premises, goal)
             
@@ -454,6 +464,7 @@ class ExplainWithChainView(APIView):
                     'error': 'region_id is required'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
+            from .reasoner.reasoner import get_reasoner
             reasoner = get_reasoner()
             result = reasoner.explain_with_chain(region_id)
             
@@ -488,6 +499,7 @@ class CompareWithConfidenceView(APIView):
                     'error': 'Both region1 and region2 are required'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
+            from .reasoner.reasoner import get_reasoner
             reasoner = get_reasoner()
             result = reasoner.compare_with_confidence(region1, region2)
             
@@ -524,6 +536,7 @@ class MultiHopInferenceView(APIView):
                     'error': 'Both start and goal are required'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
+            from .reasoner.reasoner import get_reasoner
             reasoner = get_reasoner()
             result = reasoner.multi_hop_inference(start, goal, max_hops)
             
@@ -553,8 +566,8 @@ class AdvancedPLNView(APIView):
     
     def post(self, request):
         try:
-            from cognitive.advanced_pln import get_advanced_pln
-            from cognitive.pln_rules import TruthValue
+            from cognitive.pln.advanced_pln import get_advanced_pln
+            from cognitive.pln.pln_rules import TruthValue
             
             method = request.data.get('method', 'forward')
             premises_data = request.data.get('premises', [])
@@ -615,7 +628,7 @@ class CausalInferenceView(APIView):
     
     def post(self, request):
         try:
-            from cognitive.causal_inference import get_causal_inference
+            from cognitive.pipline.causal_inference import get_causal_inference
             
             operation = request.data.get('operation')
             params = request.data.get('params', {})
@@ -683,7 +696,7 @@ class LearningLoopView(APIView):
     
     def post(self, request):
         try:
-            from cognitive.learning_loop import get_learning_loop
+            from cognitive.core.learning_loop import get_learning_loop
             
             operation = request.data.get('operation')
             learning = get_learning_loop()
@@ -737,7 +750,7 @@ class KnowledgeGraphView(APIView):
     
     def get(self, request):
         try:
-            from cognitive.knowledge_graph_viz import get_kg_visualizer
+            from cognitive.knowledge.knowledge_graph_viz import get_kg_visualizer
             
             graph_type = request.query_params.get('type', 'full')
             viz = get_kg_visualizer()

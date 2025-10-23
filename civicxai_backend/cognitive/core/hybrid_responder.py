@@ -4,9 +4,9 @@ Combines results from MeTTa/Gateway with OpenCog reasoning
 """
 import logging
 from typing import Dict, List, Any, Optional
-from .reasoner import get_reasoner
-from .knowledge_store import get_knowledge_store
-from .confidence_scorer import get_confidence_scorer
+from cognitive.reasoner.reasoner import get_reasoner
+from cognitive.knowledge.knowledge_store import get_knowledge_store
+from cognitive.pipline.confidence_scorer import get_confidence_scorer
 
 logger = logging.getLogger(__name__)
 

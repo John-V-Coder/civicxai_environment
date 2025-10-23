@@ -6,4 +6,5 @@ urlpatterns = [
     path('', lambda request: HttpResponse("Welcome to Civic XAI Backend")),
     path('admin/', admin.site.urls),
     path('api/', include('explainable_ai.urls')),
+    path('api/cognitive/', include('cognitive.urls')),  # Cognitive AI endpoints
 ]
