@@ -126,7 +126,7 @@ def run_agents():
     # Start AI Provider
     provider_cmd = [
         sys.executable,
-        str(base_dir / "uagents_ai_provider" / "ai_provider_enhanced.py")
+        str(base_dir / "uagents_ai_provider")
     ]
     
     # Check if enhanced version exists, otherwise use basic
@@ -178,7 +178,7 @@ def run_agents():
         return
     
     print_header("Agents Running")
-    print("\n✅ Both agents are running!")
+    print("\nBoth agents are running!")
     print("\nAPI Endpoints:")
     print("  - Gateway API: http://localhost:8080")
     print("  - API Docs: http://localhost:8080/docs")
@@ -234,12 +234,12 @@ def main():
     
     # Check requirements
     if not check_requirements():
-        print("\n❌ Please install missing requirements first")
+        print("\nPlease install missing requirements first")
         return
     
     # Check configuration
     if not check_env_files():
-        print("\n⚠️  Please configure .env files before running")
+        print("\nPlease configure .env files before running")
         print("  Especially add your OpenAI API key!")
         return
     
@@ -247,7 +247,7 @@ def main():
     try:
         run_agents()
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\nError: {e}")
         import traceback
         traceback.print_exc()
 

@@ -1,10 +1,10 @@
-# 🔄 Cognitive-MeTTa-Gateway Integration Flow
+# Cognitive-MeTTa-Gateway Integration Flow
 
 ## Complete Data Flow: Frontend → Backend → AI Systems → Frontend
 
 ---
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -67,7 +67,7 @@
 
 ---
 
-## 🔄 Request Flow Examples
+## Request Flow Examples
 
 ### Example 1: Simple Calculation Request
 
@@ -192,7 +192,7 @@
 
 ---
 
-## 📡 API Endpoints
+## API Endpoints
 
 ### Django Backend (Port 8000)
 
@@ -233,7 +233,7 @@ DELETE /cache/clear                        - Clear caches
 
 ---
 
-## 🔌 Integration Points
+## Integration Points
 
 ### 1. Gateway Views (`explainable_ai/views/gateway_views.py`)
 
@@ -338,7 +338,7 @@ class CognitiveOrchestrator:
 
 ---
 
-## 🎯 Routing Logic
+## Routing Logic
 
 ### Decision Tree
 
@@ -371,7 +371,7 @@ Query Received
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -408,7 +408,7 @@ COGNITIVE_CONFIG = {
 
 ---
 
-## 📊 Data Flow Patterns
+## Data Flow Patterns
 
 ### Pattern 1: Simple Request (MeTTa Only)
 ```
@@ -440,7 +440,7 @@ Time: ~5-30 seconds (limited by slowest)
 
 ---
 
-## 🚀 Implementation Steps
+## Implementation Steps
 
 ### Step 1: Create Integration Views
 
@@ -486,7 +486,7 @@ curl -X POST http://localhost:8000/api/cognitive/query/hybrid/ \
 
 ---
 
-## 🎨 Frontend Integration
+## Frontend Integration
 
 ### React Component Example
 
@@ -532,7 +532,7 @@ function CognitiveQuery() {
 
 ---
 
-## 📈 Performance Optimization
+## Performance Optimization
 
 ### Caching Strategy
 
@@ -572,7 +572,7 @@ def process_complex_query_async(query, region_id):
 
 ---
 
-## ✅ System Status Check
+## System Status Check
 
 ```bash
 # Check all systems
@@ -591,7 +591,7 @@ curl http://localhost:8001/health
 
 ---
 
-## 🎯 Summary
+## Summary
 
 **The integration works as follows:**
 
@@ -605,8 +605,8 @@ curl http://localhost:8001/health
 4. **Fallback** mechanisms ensure system always works
 
 **Key Benefits:**
-- ✅ Intelligent routing
-- ✅ Graceful degradation
-- ✅ Optimal performance
-- ✅ Rich AI capabilities
-- ✅ Knowledge-based reasoning
+- Intelligent routing
+- Graceful degradation
+- Optimal performance
+-  Rich AI capabilities
+-  Knowledge-based reasoning
