@@ -32,6 +32,7 @@ from .views.gateway_views import (
 )
 from .views.chat_views import AIChatView
 from .views.datasource_views import DataSourceViewSet
+from .views.api_docs_views import APIDocsView, APISchemaView
 from .views.allocation_request_views import (
     AllocationRequestListView,
     AllocationRequestCreateView,
@@ -61,6 +62,10 @@ router.register(r'data-sources', DataSourceViewSet, basename='datasource')
 # URL Patterns
 # =====================================================
 urlpatterns = [
+    # ===== API Documentation =====
+    path('docs/', APIDocsView.as_view(), name='api_docs'),
+    path('schema/', APISchemaView.as_view(), name='api_schema'),
+    
     # ===== Authentication =====
     path('auth/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/register/', RegisterView.as_view(), name='register'),

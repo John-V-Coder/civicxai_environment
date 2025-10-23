@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 from uagents import Agent, Context, Protocol, Model
 
 import anthropic
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
@@ -33,7 +34,27 @@ PROVIDER_AGENT_PORT = int(os.getenv("PROVIDER_AGENT_PORT", 8002))
 AI_PROVIDER_AGENT_SEED = os.getenv("AI_PROVIDER_AGENT_SEED", "civic_xai_provider_seed_12345")  # Consistent seed for same address
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-CHAT_MODEL = os.getenv("CHAT_MODEL", "claude-3-sonnet-20240229")
+CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-4o-mini")  # Default to gpt-4o-mini if not set
+
+# Detect AI provider based on model name or available keys
+if CHAT_MODEL and (CHAT_MODEL.startswith("gpt-") or CHAT_MODEL.startswith("openai/")):
+    AI_PROVIDER = "openai"
+    AI_API_KEY = OPENAI_API_KEY
+elif CHAT_MODEL and CHAT_MODEL.startswith("claude-"):
+    AI_PROVIDER = "anthropic"
+    AI_API_KEY = ANTHROPIC_API_KEY
+else:
+    # Default to OpenAI if key is available, otherwise Anthropic
+    if OPENAI_API_KEY:
+        AI_PROVIDER = "openai"
+        AI_API_KEY = OPENAI_API_KEY
+    elif ANTHROPIC_API_KEY:
+        AI_PROVIDER = "anthropic"
+        AI_API_KEY = ANTHROPIC_API_KEY
+    else:
+        AI_PROVIDER = None
+        AI_API_KEY = None
+        logger.warning("No AI API key configured. Running in mock mode.")
 MAX_TOKENS = int(os.getenv("MAX_TOKENS", 4096))
 TEMPERATURE = float(os.getenv("TEMPERATURE", 0.7))
 
@@ -87,10 +108,22 @@ class AIResponse(Model):
 # Simplified AI Processor
 # =====================================================
 class AIProcessor:
-    def __init__(self, api_key: str):
-        self.client = anthropic.Anthropic(api_key=api_key) if api_key else None
+    def __init__(self, provider: str, api_key: str, model: str):
+        self.provider = provider
+        self.model = model
         self.request_count = 0
         self.success_count = 0
+        
+        # Initialize the appropriate client
+        if provider == "openai" and api_key:
+            self.client = OpenAI(api_key=api_key)
+            logger.info(f"Initialized OpenAI client with model: {model}")
+        elif provider == "anthropic" and api_key:
+            self.client = anthropic.Anthropic(api_key=api_key)
+            logger.info(f"Initialized Anthropic client with model: {model}")
+        else:
+            self.client = None
+            logger.warning("No API client initialized - running in mock mode")
     
     async def process_allocation_request(self, request: AllocationRequest) -> Dict[str, Any]:
         """Process allocation request with PDF/URL context."""
@@ -131,15 +164,91 @@ class AIProcessor:
                 }
             else:
                 # Real API call with full context
-                prompt = f"Analyze allocation request:\n{context}"
-                logger.info(f"Processing with {len(request.files or [])} docs, {len(request.urls or [])} URLs")
-                # Simplified for now
-                result = {
-                    "priority_level": "medium", 
-                    "confidence_score": 0.7,
-                    "documents_analyzed": len(request.files) if request.files else 0,
-                    "urls_analyzed": len(request.urls) if request.urls else 0
-                }
+                prompt = f"""Analyze this resource allocation request and provide recommendations:
+
+{context}
+
+Please provide:
+1. Priority level (low/medium/high)
+2. Recommended allocation percentage (0-100)
+3. Confidence score (0-1)
+4. Key findings (3-5 points)
+5. Specific recommendations
+
+Format as JSON."""
+                
+                logger.info(f"Processing with {self.provider} using {self.model}")
+                logger.info(f"Context: {len(request.files or [])} docs, {len(request.urls or [])} URLs")
+                
+                # Call appropriate API
+                if self.provider == "openai":
+                    response = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": "You are an expert in resource allocation and policy analysis. Provide data-driven recommendations."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=TEMPERATURE,
+                        max_tokens=MAX_TOKENS
+                    )
+                    ai_response = response.choices[0].message.content
+                    
+                elif self.provider == "anthropic":
+                    response = self.client.messages.create(
+                        model=self.model,
+                        max_tokens=MAX_TOKENS,
+                        temperature=TEMPERATURE,
+                        messages=[
+                            {"role": "user", "content": prompt}
+                        ]
+                    )
+                    ai_response = response.content[0].text
+                else:
+                    ai_response = None
+                
+                # Try to parse JSON response
+                try:
+                    if ai_response:
+                        import re
+                        # Extract JSON from response (might be wrapped in markdown)
+                        json_match = re.search(r'\{[\s\S]*\}', ai_response)
+                        if json_match:
+                            parsed = json.loads(json_match.group())
+                            result = {
+                                "priority_level": parsed.get("priority_level", "medium"),
+                                "recommended_allocation_percentage": parsed.get("recommended_allocation_percentage", 50.0),
+                                "confidence_score": parsed.get("confidence_score", 0.7),
+                                "key_findings": parsed.get("key_findings", []),
+                                "recommendations": parsed.get("recommendations", []),
+                                "ai_analysis": ai_response,
+                                "documents_analyzed": len(request.files) if request.files else 0,
+                                "urls_analyzed": len(request.urls) if request.urls else 0
+                            }
+                        else:
+                            # Fallback if no JSON found
+                            result = {
+                                "priority_level": "medium",
+                                "confidence_score": 0.7,
+                                "ai_analysis": ai_response,
+                                "documents_analyzed": len(request.files) if request.files else 0,
+                                "urls_analyzed": len(request.urls) if request.urls else 0
+                            }
+                    else:
+                        result = {
+                            "priority_level": "medium",
+                            "confidence_score": 0.7,
+                            "documents_analyzed": len(request.files) if request.files else 0,
+                            "urls_analyzed": len(request.urls) if request.urls else 0
+                        }
+                except json.JSONDecodeError:
+                    # If JSON parsing fails, return raw response
+                    result = {
+                        "priority_level": "medium",
+                        "confidence_score": 0.7,
+                        "ai_analysis": ai_response,
+                        "documents_analyzed": len(request.files) if request.files else 0,
+                        "urls_analyzed": len(request.urls) if request.urls else 0
+                    }
             
             self.success_count += 1
             processing_time = (datetime.now() - start_time).total_seconds()
@@ -214,7 +323,7 @@ def create_agent():
         raise
 
 # Initialize components
-ai_processor = AIProcessor(ANTHROPIC_API_KEY or OPENAI_API_KEY)
+ai_processor = AIProcessor(AI_PROVIDER, AI_API_KEY, CHAT_MODEL)
 
 # Create protocol
 provider_protocol = Protocol(name="CivicXAI_Provider_Protocol", version="2.0.0")

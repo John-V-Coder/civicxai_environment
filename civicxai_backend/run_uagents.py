@@ -69,12 +69,26 @@ def check_env_files():
     else:
         print(f"  ✓ AI Provider .env found")
     
-    # Check for OpenAI key
+    # Check for OpenAI or Anthropic API key
     if provider_env.exists():
         with open(provider_env) as f:
-            if "OPENAI_API_KEY=your_" in f.read() or "OPENAI_API_KEY=" not in f.read():
-                print("\n WARNING: OpenAI API key not configured!")
-                print("  Add your key to uagents_ai_provider/.env")
+            content = f.read()
+            
+            # Look for a valid OpenAI key (starts with sk-)
+            has_valid_openai = "OPENAI_API_KEY=sk-" in content
+            # Look for a valid Anthropic key
+            has_valid_anthropic = "ANTHROPIC_API_KEY=sk-ant-" in content
+            # Check for placeholder
+            has_placeholder = "your_openai_api_key_here" in content or "your_anthropic" in content
+            
+            if not (has_valid_openai or has_valid_anthropic):
+                if has_placeholder:
+                    print("\n WARNING: API key placeholder detected!")
+                else:
+                    print("\n WARNING: No valid API key found!")
+                print("  Add your OpenAI key to uagents_ai_provider/.env")
+                print("  Format: OPENAI_API_KEY=sk-proj-your_key_here")
+                print("  Or use Anthropic: ANTHROPIC_API_KEY=sk-ant-your_key_here")
                 return False
     
     return True

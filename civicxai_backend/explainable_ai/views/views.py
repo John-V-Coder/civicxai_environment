@@ -16,8 +16,21 @@ from ..serializers import (
     VoteSerializer, EventSerializer, EventListSerializer,
 )
 from ..permissions import IsOwnerOrReadOnly, IsAdminOrReadOnly, IsContributorOrReadOnly
-from metta.metta_engine import metta_engine
-from agents.asi1_governance import ASIExplainAgent
+
+# Optional imports - handle gracefully if not available
+try:
+    from metta.metta_engine import metta_engine
+    METTA_AVAILABLE = True
+except ImportError:
+    METTA_AVAILABLE = False
+    metta_engine = None
+
+try:
+    from agents.asi1_governance import ASIExplainAgent
+    ASI_AVAILABLE = True
+except ImportError:
+    ASI_AVAILABLE = False
+    ASIExplainAgent = None
 
 User = get_user_model()
 
@@ -32,6 +45,35 @@ class CalculatePriorityView(APIView):
 
     def post(self, request):
         try:
+            if not METTA_AVAILABLE:
+                # Fallback to simple calculation
+                poverty = float(request.data.get('poverty_index', 0))
+                impact = float(request.data.get('project_impact', 0))
+                environment = float(request.data.get('deforestation', 0))
+                corruption = float(request.data.get('corruption_risk', 0))
+
+                # Simple weighted calculation
+                priority_score = (poverty * 0.4 + impact * 0.3 + environment * 0.2 - corruption * 0.1)
+                priority_score = max(0, min(1, priority_score))  # Clamp to [0, 1]
+
+                total_budget = 50_000_000
+                allocation = priority_score * total_budget
+
+                return Response({
+                    'success': True,
+                    'priority_score': priority_score,
+                    'allocation': allocation,
+                    'allocation_millions': round(allocation / 1_000_000, 2),
+                    'factors': {
+                        'poverty_index': poverty,
+                        'project_impact': impact,
+                        'deforestation': environment,
+                        'corruption_risk': corruption
+                    },
+                    'explanation': f"Priority score {priority_score:.3f} calculated using fallback algorithm (MeTTa engine not available)",
+                    'warning': 'MeTTa engine not available, using fallback calculation'
+                })
+
             poverty = request.data.get('poverty_index', 0)
             impact = request.data.get('project_impact', 0)
             environment = request.data.get('deforestation', 0)
@@ -58,7 +100,11 @@ class CalculatePriorityView(APIView):
                 'explanation': f"Priority score {priority_score:.3f} calculated using MeTTa policy engine"
             })
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            import traceback
+            return Response({
+                'error': str(e),
+                'traceback': traceback.format_exc()
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class HealthCheckView(APIView):
@@ -67,10 +113,23 @@ class HealthCheckView(APIView):
 
     def get(self, request):
         try:
+            if not METTA_AVAILABLE:
+                return Response({
+                    'status': 'healthy',
+                    'metta_engine': 'unavailable',
+                    'fallback': 'active',
+                    'message': 'Using fallback calculation engine'
+                })
+
             test_score = metta_engine.calculate_priority(0.8, 0.9, 0.4, 0.3)
             return Response({'status': 'healthy', 'metta_engine': 'operational', 'test_calculation': test_score})
         except Exception as e:
-            return Response({'status': 'unhealthy', 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            import traceback
+            return Response({
+                'status': 'unhealthy',
+                'error': str(e),
+                'traceback': traceback.format_exc()
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class GenerateExplanationAPIView(APIView):
@@ -100,6 +159,27 @@ class GenerateExplanationAPIView(APIView):
         policy_feedback = "Complies with high-need region policy based on poverty index."
 
         try:
+            if not ASI_AVAILABLE:
+                # Fallback explanation generation
+                explanation = f"""Allocation Analysis for {region_data['region_name']}:
+
+Priority Score: {predicted_priority_score:.2f}
+
+Key Factors:
+- Poverty Index ({feature_importance_factors['poverty_index']:.0%}): {region_data['poverty_index']:.2f}
+- Deforestation ({feature_importance_factors['deforestation']:.0%}): {region_data['deforestation']:.2f}
+- Project Impact ({feature_importance_factors['project_impact_score']:.0%}): {region_data['project_impact_score']:.2f}
+
+Policy Compliance: {policy_feedback}
+
+Note: Using fallback explanation (ASI agent not available)"""
+
+                return Response({
+                    "explanation": explanation,
+                    "region_name": region_data["region_name"],
+                    "warning": "ASI agent not available, using fallback explanation"
+                }, status=status.HTTP_200_OK)
+
             explain_agent = ASIExplainAgent()
             explanation = explain_agent.generate_explanation(
                 region_data={"region_name": region_data["region_name"], "priority_score": predicted_priority_score},
@@ -108,9 +188,17 @@ class GenerateExplanationAPIView(APIView):
             )
             return Response({"explanation": explanation, "region_name": region_data["region_name"]}, status=status.HTTP_200_OK)
         except ValueError as e:
-            return Response({"error": f"Configuration error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            import traceback
+            return Response({
+                "error": f"Configuration error: {e}",
+                "traceback": traceback.format_exc()
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
-            return Response({"error": f"Failed to generate explanation: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            import traceback
+            return Response({
+                "error": f"Failed to generate explanation: {e}",
+                "traceback": traceback.format_exc()
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # =====================================================

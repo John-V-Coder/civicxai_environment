@@ -167,7 +167,7 @@ class AllocationRequestDetailView(APIView):
                 allocation_request = AllocationRequest.objects.get(pk=pk)
             else:
                 allocation_request = AllocationRequest.objects.get(request_id=request_id)
-            
+
             return Response({
                 'success': True,
                 'data': {
@@ -190,12 +190,21 @@ class AllocationRequestDetailView(APIView):
                     'analyzed_at': allocation_request.analyzed_at.isoformat() if allocation_request.analyzed_at else None,
                 }
             }, status=status.HTTP_200_OK)
-            
+
         except AllocationRequest.DoesNotExist:
             return Response({
                 'success': False,
-                'error': 'Allocation request not found'
+                'error': 'Allocation request not found',
+                'pk': pk,
+                'request_id': request_id
             }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            import traceback
+            return Response({
+                'success': False,
+                'error': str(e),
+                'traceback': traceback.format_exc()
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def put(self, request, pk=None, request_id=None):
         """Update allocation request with AI analysis results"""
