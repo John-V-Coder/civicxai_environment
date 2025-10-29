@@ -6,12 +6,18 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.core.mail import send_mail
+from django.conf import settings
 from django.db import transaction
 from ..serializers import (
     CustomTokenObtainPairSerializer,
     UserRegistrationSerializer,
     UserProfileSerializer,
-    DashboardMetricsSerializer
+    DashboardMetricsSerializer,
+    UserListSerializer
 )
 from ..models import DashboardMetrics
 
@@ -146,17 +152,145 @@ class ChangePasswordView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+class RequestPasswordResetView(APIView):
+    """Request password reset - sends email with reset token"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        email = request.data.get('email')
+        
+        if not email:
+            return Response({
+                'success': False,
+                'error': 'Email is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(email=email)
+            
+            # Generate password reset token
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            
+            # Create reset link (frontend URL)
+            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+            reset_link = f"{frontend_url}/reset-password/{uid}/{token}"
+            
+            # Send email (in production, use proper email templates)
+            try:
+                send_mail(
+                    subject='CivicXAI - Password Reset Request',
+                    message=f'Click the link below to reset your password:\n\n{reset_link}\n\nThis link will expire in 24 hours.\n\nIf you did not request this reset, please ignore this email.',
+                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@civicxai.com'),
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
+                email_sent = True
+            except Exception as e:
+                # Log error but don't expose to user
+                print(f"Email send error: {e}")
+                email_sent = False
+            
+            return Response({
+                'success': True,
+                'message': 'If an account with that email exists, a password reset link has been sent.',
+                'reset_link': reset_link if not email_sent else None  # Include link for dev/testing
+            }, status=status.HTTP_200_OK)
+            
+        except User.DoesNotExist:
+            # Don't reveal if user exists or not (security)
+            return Response({
+                'success': True,
+                'message': 'If an account with that email exists, a password reset link has been sent.'
+            }, status=status.HTTP_200_OK)
+
+
+class VerifyPasswordResetTokenView(APIView):
+    """Verify if password reset token is valid"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        uid = request.data.get('uid')
+        token = request.data.get('token')
+        
+        if not uid or not token:
+            return Response({
+                'success': False,
+                'error': 'UID and token are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user_id = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=user_id)
+            
+            if default_token_generator.check_token(user, token):
+                return Response({
+                    'success': True,
+                    'message': 'Token is valid',
+                    'email': user.email
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'error': 'Invalid or expired reset token'
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({
+                'success': False,
+                'error': 'Invalid reset token'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ResetPasswordView(APIView):
+    """Reset password using token"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        uid = request.data.get('uid')
+        token = request.data.get('token')
+        new_password = request.data.get('new_password')
+        
+        if not uid or not token or not new_password:
+            return Response({
+                'success': False,
+                'error': 'UID, token, and new password are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if len(new_password) < 8:
+            return Response({
+                'success': False,
+                'error': 'Password must be at least 8 characters'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user_id = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=user_id)
+            
+            if default_token_generator.check_token(user, token):
+                user.set_password(new_password)
+                user.save()
+                
+                return Response({
+                    'success': True,
+                    'message': 'Password has been reset successfully'
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'error': 'Invalid or expired reset token'
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({
+                'success': False,
+                'error': 'Invalid reset token'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
 # =====================================================
 #  User Management Views
 # =====================================================
-
-from ..serializers import (
-    CustomTokenObtainPairSerializer,
-    UserRegistrationSerializer,
-    UserProfileSerializer,
-    DashboardMetricsSerializer,
-    UserListSerializer
-)
 
 
 class UserListView(generics.ListAPIView):

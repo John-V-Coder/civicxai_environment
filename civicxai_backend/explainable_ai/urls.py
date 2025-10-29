@@ -18,6 +18,9 @@ from .views.auth_views import (
     LogoutView,
     UserProfileView,
     ChangePasswordView,
+    RequestPasswordResetView,
+    VerifyPasswordResetTokenView,
+    ResetPasswordView,
     UserListView,
     UpdateUserRoleView,
     DashboardOverviewView,
@@ -72,6 +75,9 @@ urlpatterns = [
     path('auth/logout/', LogoutView.as_view(), name='logout'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/status/', check_auth_status, name='auth_status'),
+    path('auth/password-reset/request/', RequestPasswordResetView.as_view(), name='password_reset_request'),
+    path('auth/password-reset/verify/', VerifyPasswordResetTokenView.as_view(), name='password_reset_verify'),
+    path('auth/password-reset/confirm/', ResetPasswordView.as_view(), name='password_reset_confirm'),
 
     # ===== User Management =====
     path('user/profile/', UserProfileView.as_view(), name='user_profile'),

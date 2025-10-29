@@ -146,4 +146,3 @@ weasel==0.4.1
 wrapt==2.0.0
 yarl==1.22.0
 
-hyperon==0.2.2

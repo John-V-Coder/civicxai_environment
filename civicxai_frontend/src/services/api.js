@@ -24,10 +24,14 @@ api.interceptors.request.use(
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log(`[API] Request to ${config.url} with token:`, token.substring(0, 20) + '...');
+    } else {
+      console.log(`[API] Request to ${config.url} without token`);
     }
     return config;
   },
   (error) => {
+    console.error('[API] Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -39,25 +43,33 @@ api.interceptors.response.use(
     const originalRequest = error.config;
     
     if (error.response?.status === 401 && !originalRequest._retry) {
+      console.log('[API] Got 401 error, attempting token refresh...');
       originalRequest._retry = true;
       
       try {
         const refreshToken = localStorage.getItem('refresh_token');
         if (refreshToken) {
+          console.log('[API] Refreshing token...');
           const response = await axios.post(`${API_BASE_URL}/auth/refresh/`, {
             refresh: refreshToken,
           });
           
+          console.log('[API] Token refresh successful');
           localStorage.setItem('access_token', response.data.access);
           api.defaults.headers.common['Authorization'] = `Bearer ${response.data.access}`;
           
+          console.log('[API] Retrying original request');
           return api(originalRequest);
+        } else {
+          console.log('[API] No refresh token available');
         }
       } catch (refreshError) {
-        // Refresh failed, redirect to login
+        // Refresh failed, clear tokens
+        console.error('[API] Token refresh failed:', refreshError.response?.data || refreshError.message);
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        window.location.href = '/login';
+        // Don't redirect here, let the app handle it
+        return Promise.reject(refreshError);
       }
     }
     
@@ -75,6 +87,9 @@ export const authAPI = {
   updateProfile: (data) => api.patch('/user/profile/', data),
   changePassword: (data) => api.post('/user/change-password/', data),
   checkAuthStatus: () => api.get('/auth/status/'),
+  requestPasswordReset: (email) => api.post('/auth/password-reset/request/', { email }),
+  verifyResetToken: (uid, token) => api.post('/auth/password-reset/verify/', { uid, token }),
+  resetPassword: (uid, token, new_password) => api.post('/auth/password-reset/confirm/', { uid, token, new_password }),
 };
 
 // Dashboard API

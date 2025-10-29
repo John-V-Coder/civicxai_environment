@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,25 +18,31 @@ import {
   FileText,
   Trash2,
   Network,
-  Activity
+  Activity,
+  ArrowLeft,
+  Calculator,
+  TrendingUp,
+  Search,
+  Zap,
+  Shield,
+  BookOpen,
+  Paperclip
 } from 'lucide-react';
 import { useChat } from '@/hooks/useChat';
+import { useMeTTa } from '@/hooks/useMeTTa';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { allocationRequestsAPI } from '@/services/api';
 
 /**
  * AI Gateway Chat Interface
  * Interactive chat platform for asking AI questions and getting explanations
+ * Supports both general chat and proposal-specific analysis
  */
 const AIGatewayChat = () => {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      type: 'bot',
-      content: 'Hello! I\'m your AI assistant powered by uAgents Gateway and MeTTa engine. I can help you with:\n\n• Allocation priority calculations\n• Explaining allocation decisions\n• Analyzing metrics and data\n• PDF document analysis\n\nHow can I assist you today?',
-      timestamp: new Date()
-    }
-  ]);
+  const navigate = useNavigate();
+  const { id: proposalId } = useParams();
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [files, setFiles] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
@@ -48,6 +55,19 @@ const AIGatewayChat = () => {
     loading,
     error: chatError 
   } = useChat();
+  
+  const { calculatePriority } = useMeTTa();
+  
+  const [proposal, setProposal] = useState(null);
+  const [priorityData, setPriorityData] = useState(null);
+  const [calculating, setCalculating] = useState(false);
+
+  // Load proposal if ID provided
+  useEffect(() => {
+    if (proposalId) {
+      loadProposal();
+    }
+  }, [proposalId]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -61,6 +81,93 @@ const AIGatewayChat = () => {
       }
     }
   }, [messages, isTyping]);
+
+  /**
+   * Load proposal data for specific proposal analysis
+   */
+  const loadProposal = async () => {
+    try {
+      setCalculating(true);
+      const response = await allocationRequestsAPI.get(proposalId);
+      
+      if (response.data?.success) {
+        const proposalData = response.data.data;
+        setProposal(proposalData);
+        
+        // Start AI analysis
+        await analyzeProposal(proposalData);
+      }
+    } catch (error) {
+      console.error('Error loading proposal:', error);
+      toast.error('Failed to load proposal data');
+      addMessage('bot', 'Sorry, I couldn\'t load the proposal data. Please try again.');
+    } finally {
+      setCalculating(false);
+    }
+  };
+
+  /**
+   * Analyze proposal using MeTTa
+   */
+  const analyzeProposal = async (proposalData) => {
+    addMessage('bot', `Hello! I'm analyzing the proposal for **${proposalData.region_name || proposalData.region_id}**...`);
+    
+    try {
+      const metrics = proposalData.metrics || {};
+      const calculationData = {
+        poverty_index: metrics.poverty_index || proposalData.poverty_index || 0.5,
+        project_impact: metrics.project_impact || proposalData.project_impact || 0.5,
+        environmental_score: metrics.environmental_score || proposalData.environmental_score || 0.5,
+        corruption_risk: metrics.corruption_risk || proposalData.corruption_risk || 0.3
+      };
+      
+      const priorityResult = await calculatePriority(calculationData);
+      setPriorityData(priorityResult);
+      
+      // Explain results
+      setTimeout(() => {
+        explainPriorityResults(priorityResult, calculationData, proposalData);
+      }, 500);
+      
+    } catch (error) {
+      console.error('Error analyzing proposal:', error);
+      addMessage('bot', 'Analysis complete. You can ask me questions about this proposal.');
+    }
+  };
+
+  /**
+   * Explain priority results
+   */
+  const explainPriorityResults = (priorityResult, metrics, proposalData) => {
+    const { priority_score, priority_level, recommended_allocation_percentage } = priorityResult;
+    
+    addMessage('bot', `
+**${priority_level?.toUpperCase() || 'MEDIUM'} PRIORITY**
+
+**Priority Score:** ${(priority_score * 100).toFixed(1)}%
+**Recommended Allocation:** ${recommended_allocation_percentage?.toFixed(1)}%
+
+This proposal has been analyzed using MeTTa's AI reasoning engine based on:
+- Poverty Index: ${(metrics.poverty_index * 100).toFixed(0)}%
+- Project Impact: ${(metrics.project_impact * 100).toFixed(0)}%
+- Environmental Score: ${(metrics.environmental_score * 100).toFixed(0)}%
+- Corruption Risk: ${(metrics.corruption_risk * 100).toFixed(0)}%
+
+Feel free to ask me questions about specific metrics, allocation rationale, or implementation strategy!
+    `);
+  };
+
+  /**
+   * Add message to chat
+   */
+  const addMessage = (type, content) => {
+    setMessages(prev => [...prev, {
+      id: Date.now() + Math.random(),
+      type,
+      content,
+      timestamp: new Date()
+    }]);
+  };
 
 
   /**
@@ -154,45 +261,141 @@ const AIGatewayChat = () => {
     setFiles([]);
   };
 
+  /**
+   * Get priority level color
+   */
+  const getPriorityColor = (level) => {
+    switch(level) {
+      case 'critical': return 'bg-red-500/20 text-red-400 border-red-500/30';
+      case 'high': return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+      case 'medium': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+      default: return 'bg-green-500/20 text-green-400 border-green-500/30';
+    }
+  };
+
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100vh - 8rem)' }}>
-      <Card className="flex-1 bg-slate-900 border-slate-800 flex flex-col" style={{ minHeight: 0 }}>
-        {/* Chat Header */}
-        <CardHeader className="border-b border-slate-800 pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/20 border border-blue-500/30">
-                <Brain className="h-5 w-5 text-blue-400" />
-              </div>
-              <div>
-                <CardTitle className="text-white">AI Assistant</CardTitle>
-                <p className="text-sm text-slate-400 flex items-center gap-2">
-                  <Activity className="h-3 w-3" />
-                  {loading ? 'Processing...' : 'Online'}
-                </p>
-              </div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900">
+      <div className="container mx-auto p-6 space-y-4 max-w-7xl">
+        {/* Back Button */}
+        <div className="flex items-center justify-between">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate(proposalId ? '/dashboard' : '/ai-gateway')}
+            className="text-slate-400 hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {proposalId ? 'Back to Dashboard' : 'Back to Gateway Hub'}
+          </Button>
+          
+          {proposal && (
+            <div className="text-right">
+              <h2 className="text-xl font-bold text-white">{proposal.region_name || proposal.region_id}</h2>
+              <p className="text-sm text-slate-400">Proposal Analysis</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-500/30">
-                <Network className="h-3 w-3 mr-1" />
-                Gateway
-              </Badge>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearChat}
-                className="text-slate-400 hover:text-white"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
+          )}
+        </div>
+        
+        {/* Priority Summary for Proposals */}
+        {priorityData && proposal && (
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Calculator className="w-5 w-5 text-violet-400" />
+                MeTTa Analysis Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-slate-900/50 p-4 rounded-lg">
+                  <div className="text-slate-400 text-sm mb-1">Priority Score</div>
+                  <div className="text-2xl font-bold text-white">
+                    {(priorityData.priority_score * 100).toFixed(1)}%
+                  </div>
+                </div>
+                <div className="bg-slate-900/50 p-4 rounded-lg">
+                  <div className="text-slate-400 text-sm mb-1">Priority Level</div>
+                  <Badge className={`text-lg ${getPriorityColor(priorityData.priority_level)}`}>
+                    {priorityData.priority_level?.toUpperCase()}
+                  </Badge>
+                </div>
+                <div className="bg-slate-900/50 p-4 rounded-lg">
+                  <div className="text-slate-400 text-sm mb-1">Recommended Allocation</div>
+                  <div className="text-2xl font-bold text-violet-400">
+                    {priorityData.recommended_allocation_percentage?.toFixed(1)}%
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="flex flex-col" style={{ height: 'calc(100vh - 16rem)' }}>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-hidden" style={{ minHeight: 0 }}>
-          <ScrollArea className="h-full p-4" ref={scrollRef}>
-            <div className="space-y-4">
+        <div className="flex-1 overflow-hidden relative" style={{ minHeight: 0 }}>
+          {messages.length === 0 && !proposalId ? (
+            /* Empty State - Welcome Screen */
+            <div className="h-full flex flex-col items-center justify-center p-8">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center max-w-2xl space-y-6"
+              >
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <Brain className="h-10 w-10 text-blue-400" />
+                  <h1 className="text-4xl font-bold text-white">AI Gateway</h1>
+                </div>
+                
+                {/* Compact Cards Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+                  <Card className="bg-slate-800/50 border-slate-700 hover:border-blue-500/50 transition-all cursor-pointer group p-3">
+                    <CardContent className="p-0 text-center">
+                      <div className="p-2 rounded-lg bg-blue-500/20 group-hover:bg-blue-500/30 transition-colors mb-2 mx-auto w-10 h-10 flex items-center justify-center">
+                        <Calculator className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <h3 className="text-white text-xs font-medium mb-1">Priority Calculations</h3>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-slate-800/50 border-slate-700 hover:border-purple-500/50 transition-all cursor-pointer group p-3">
+                    <CardContent className="p-0 text-center">
+                      <div className="p-2 rounded-lg bg-purple-500/20 group-hover:bg-purple-500/30 transition-colors mb-2 mx-auto w-10 h-10 flex items-center justify-center">
+                        <BookOpen className="h-5 w-5 text-purple-400" />
+                      </div>
+                      <h3 className="text-white text-xs font-medium mb-1">Explanations</h3>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-slate-800/50 border-slate-700 hover:border-green-500/50 transition-all cursor-pointer group p-3">
+                    <CardContent className="p-0 text-center">
+                      <div className="p-2 rounded-lg bg-green-500/20 group-hover:bg-green-500/30 transition-colors mb-2 mx-auto w-10 h-10 flex items-center justify-center">
+                        <TrendingUp className="h-5 w-5 text-green-400" />
+                      </div>
+                      <h3 className="text-white text-xs font-medium mb-1">Metrics Analysis</h3>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-slate-800/50 border-slate-700 hover:border-orange-500/50 transition-all cursor-pointer group p-3">
+                    <CardContent className="p-0 text-center">
+                      <div className="p-2 rounded-lg bg-orange-500/20 group-hover:bg-orange-500/30 transition-colors mb-2 mx-auto w-10 h-10 flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-orange-400" />
+                      </div>
+                      <h3 className="text-white text-xs font-medium mb-1">PDF Analysis</h3>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="mt-6 flex items-center gap-2 justify-center">
+                  <Shield className="h-4 w-4 text-slate-500" />
+                  <p className="text-xs text-slate-500">
+                    AI-powered by uAgents Gateway • MeTTa Reasoning
+                  </p>
+                </div>
+              </motion.div>
+            </div>
+          ) : (
+          <ScrollArea className="h-full p-6" ref={scrollRef}>
+            <div className="max-w-4xl mx-auto space-y-6">
             <AnimatePresence>
               {messages.map((message) => (
                 <motion.div
@@ -204,28 +407,31 @@ const AIGatewayChat = () => {
                   className={`flex gap-3 ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
                 >
                   {/* Avatar */}
-                  <Avatar className={`h-8 w-8 ${message.type === 'user' ? 'bg-violet-500' : 'bg-blue-500'}`}>
+                  <Avatar className={`h-9 w-9 flex-shrink-0 ${message.type === 'user' ? 'bg-gradient-to-br from-violet-500 to-purple-600' : 'bg-gradient-to-br from-blue-500 to-cyan-600'}`}>
                     <AvatarFallback>
                       {message.type === 'user' ? (
-                        <User className="h-4 w-4 text-white" />
+                        <User className="h-5 w-5 text-white" />
                       ) : (
-                        <Bot className="h-4 w-4 text-white" />
+                        <Brain className="h-5 w-5 text-white" />
                       )}
                     </AvatarFallback>
                   </Avatar>
 
                   {/* Message Content */}
-                  <div className={`flex-1 max-w-[85%] ${message.type === 'user' ? 'text-right' : 'text-left'}`}>
+                  <div className="flex-1">
+                    <div className="text-xs text-slate-500 mb-1">
+                      {message.type === 'user' ? 'You' : 'AI Assistant'}
+                    </div>
                     <div
-                      className={`inline-block p-4 rounded-lg ${
+                      className={`p-4 rounded-2xl ${
                         message.type === 'user'
-                          ? 'bg-violet-600 text-white'
+                          ? 'bg-gradient-to-br from-violet-600 to-purple-700 text-white'
                           : message.isError
                           ? 'bg-red-900/30 border border-red-700 text-slate-300'
-                          : 'bg-slate-800 border border-slate-700 text-slate-300'
+                          : 'bg-slate-800/80 text-slate-200'
                       }`}
                     >
-                      <div className="whitespace-pre-wrap text-sm">
+                      <div className="whitespace-pre-wrap text-[15px] leading-relaxed">
                         {message.content}
                       </div>
                       
@@ -241,8 +447,7 @@ const AIGatewayChat = () => {
                         </div>
                       )}
                     </div>
-                    
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-slate-600 mt-2">
                       {message.timestamp.toLocaleTimeString()}
                     </p>
                   </div>
@@ -251,88 +456,78 @@ const AIGatewayChat = () => {
             </AnimatePresence>
 
             {/* Typing indicator */}
-            {isTyping && (
+            {(isTyping || calculating) && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="flex gap-3"
               >
-                <Avatar className="h-8 w-8 bg-blue-500">
+                <Avatar className="h-9 w-9 bg-gradient-to-br from-blue-500 to-cyan-600">
                   <AvatarFallback>
-                    <Bot className="h-4 w-4 text-white" />
+                    <Brain className="h-5 w-5 text-white" />
                   </AvatarFallback>
                 </Avatar>
-                <div className="bg-slate-800 border border-slate-700 p-3 rounded-lg">
-                  <div className="flex gap-1">
-                    <span className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div>
+                  <div className="text-xs text-slate-500 mb-1">AI Assistant</div>
+                  <div className="bg-slate-800/80 p-4 rounded-2xl">
+                    <div className="flex gap-1.5">
+                      <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
                   </div>
                 </div>
               </motion.div>
             )}
             </div>
           </ScrollArea>
+          )}
         </div>
 
-        {/* Input Area */}
-        <div className="border-t border-slate-800">
-          <CardContent className="p-4">
-          {/* File Preview - Enhanced */}
+        {/* Input Area - Enhanced for better typing experience */}
+        <div className="border-t border-slate-800/50 p-6 max-w-4xl mx-auto w-full">
+          {/* File Preview - Compact */}
           {files.length > 0 && (
-            <div className="mb-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Attached Files ({files.length})
+            <div className="mb-3 p-2 bg-slate-800/50 rounded-lg border border-slate-700">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-medium text-slate-300 flex items-center gap-1">
+                  <FileText className="h-3 w-3" />
+                  Files ({files.length})
                 </p>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setFiles([])}
-                  className="text-xs text-slate-400 hover:text-white h-6"
+                  className="text-xs text-slate-400 hover:text-white h-5 px-2"
                 >
-                  Clear All
+                  Clear
                 </Button>
               </div>
-              <div className="space-y-2">
+              <div className="flex flex-wrap gap-1">
                 {files.map((file, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="flex items-center justify-between p-2 bg-slate-900 rounded-md border border-slate-700 hover:border-slate-600 transition-colors"
+                    className="flex items-center gap-1 px-2 py-1 bg-slate-900 rounded text-xs border border-slate-700"
                   >
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div className="p-2 rounded bg-blue-500/20">
-                        <FileText className="h-4 w-4 text-blue-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-200 truncate">
-                          {file.name}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {(file.size / 1024).toFixed(2)} KB
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                    <FileText className="h-3 w-3 text-blue-400" />
+                    <span className="text-slate-300 truncate max-w-[120px]">
+                      {file.name}
+                    </span>
+                    <button
                       onClick={() => removeFile(index)}
-                      className="h-8 w-8 text-slate-400 hover:text-red-400 hover:bg-red-500/10 flex-shrink-0"
-                      title="Remove file"
+                      className="text-slate-400 hover:text-red-400 ml-1"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      <Trash2 className="h-3 w-3" />
+                    </button>
                   </motion.div>
                 ))}
               </div>
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="relative w-full">
             <input
               ref={fileInputRef}
               type="file"
@@ -342,44 +537,65 @@ const AIGatewayChat = () => {
               className="hidden"
             />
             
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => fileInputRef.current?.click()}
-              className="bg-slate-800 border-slate-700 hover:bg-slate-700 hover:border-blue-500 transition-colors"
-              title="Upload files"
-            >
-              <Upload className="h-4 w-4" />
-            </Button>
+            {/* Enhanced Input Area */}
+            <div className="bg-slate-800/80 rounded-2xl border border-slate-700/50 focus-within:border-blue-500/50 transition-all p-1">
+              <div className="flex items-center gap-1">
+                {/* Compact Action Buttons */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-xl h-8 w-8 p-0"
+                  title="Attach files"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-xl h-8 w-8 p-0"
+                  title="Analyze with MeTTa"
+                >
+                  <Brain className="h-4 w-4" />
+                </Button>
 
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-              placeholder="Ask me anything about allocations, priorities, or explanations..."
-              className="flex-1 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
-              disabled={loading}
-            />
+                {/* Expanded Input Area */}
+                <div className="flex-1 min-w-0">
+                  <Textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    placeholder={proposalId ? "Ask about this proposal..." : "Message AI Assistant..."}
+                    className="w-full bg-transparent border-0 text-white placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-[15px] resize-none min-h-[40px] max-h-[120px] py-2"
+                    disabled={loading || calculating}
+                    rows={1}
+                  />
+                </div>
 
-            <Button
-              onClick={handleSend}
-              disabled={loading || (!input.trim() && files.length === 0)}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
+                <Button
+                  onClick={handleSend}
+                  disabled={loading || calculating || (!input.trim() && files.length === 0)}
+                  className="bg-blue-600 hover:bg-blue-700 rounded-xl h-8 w-8 p-0 flex-shrink-0"
+                  size="icon"
+                >
+                  {(loading || calculating) ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
           </div>
-
-          <p className="text-xs text-slate-500 mt-2">
-            Try: &quot;Calculate priority for poverty 0.8&quot;, &quot;Explain this allocation&quot;, or &quot;Analyze with uploaded PDFs&quot;
-          </p>
-          </CardContent>
         </div>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

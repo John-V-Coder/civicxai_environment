@@ -10,22 +10,61 @@ const useAuthStore = create((set, get) => ({
   // Initialize auth state from localStorage
   initAuth: async () => {
     const token = localStorage.getItem('access_token');
+    const refreshToken = localStorage.getItem('refresh_token');
+    
+    console.log('[Auth Init] Starting with token:', token ? 'exists' : 'none');
+    
     if (token) {
+      // Set loading state
+      set({ isLoading: true });
+      
       try {
+        // Try to get auth status with current token
+        console.log('[Auth Init] Checking auth status...');
         const response = await authAPI.checkAuthStatus();
+        console.log('[Auth Init] Auth status success:', response.data.user.username);
+        
         set({ 
           user: response.data.user, 
           isAuthenticated: true,
           isLoading: false 
         });
       } catch (error) {
-        // Token is invalid, clear it
+        console.log('[Auth Init] Auth status failed:', error.response?.status);
+        
+        // Token might be expired, try refresh if available
+        if (refreshToken && error.response?.status === 401) {
+          try {
+            console.log('[Auth Init] Attempting token refresh...');
+            const refreshResponse = await authAPI.refreshToken(refreshToken);
+            localStorage.setItem('access_token', refreshResponse.data.access);
+            console.log('[Auth Init] Token refreshed successfully');
+            
+            // Try auth status again with new token
+            const statusResponse = await authAPI.checkAuthStatus();
+            console.log('[Auth Init] Auth status after refresh success:', statusResponse.data.user.username);
+            
+            set({ 
+              user: statusResponse.data.user, 
+              isAuthenticated: true,
+              isLoading: false 
+            });
+            return;
+          } catch (refreshError) {
+            // Refresh also failed, clear everything
+            console.error('[Auth Init] Token refresh failed:', refreshError.response?.data || refreshError.message);
+          }
+        }
+        
+        // Clear invalid tokens
+        console.log('[Auth Init] Clearing tokens and logging out');
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         set({ user: null, isAuthenticated: false, isLoading: false });
       }
     } else {
       // No token, user is browsing as guest
+      console.log('[Auth Init] No token found, guest mode');
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
@@ -120,6 +159,43 @@ const useAuthStore = create((set, get) => ({
       return { success: true };
     } catch (error) {
       const message = error.response?.data?.error || 'Failed to change password';
+      toast.error(message);
+      return { success: false, error: message };
+    }
+  },
+
+  // Request password reset
+  requestPasswordReset: async (email) => {
+    try {
+      const response = await authAPI.requestPasswordReset(email);
+      toast.success(response.data.message);
+      return { success: true, data: response.data };
+    } catch (error) {
+      const message = error.response?.data?.error || 'Failed to request password reset';
+      toast.error(message);
+      return { success: false, error: message };
+    }
+  },
+
+  // Verify reset token
+  verifyResetToken: async (uid, token) => {
+    try {
+      const response = await authAPI.verifyResetToken(uid, token);
+      return { success: true, data: response.data };
+    } catch (error) {
+      const message = error.response?.data?.error || 'Invalid or expired reset token';
+      return { success: false, error: message };
+    }
+  },
+
+  // Reset password with token
+  resetPassword: async (uid, token, newPassword) => {
+    try {
+      const response = await authAPI.resetPassword(uid, token, newPassword);
+      toast.success('Password has been reset successfully');
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.error || 'Failed to reset password';
       toast.error(message);
       return { success: false, error: message };
     }
