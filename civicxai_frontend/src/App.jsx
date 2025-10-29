@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import Preloader from '@/components/ui/Preloader';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from 'sonner';
@@ -33,10 +34,21 @@ import DataSources from '@/pages/DataSources/DataSources';
 
 function App() {
   const { initAuth } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     initAuth();
+    // Simulate a loading time
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 3000); // 3 seconds
+
+    return () => clearTimeout(timer);
   }, [initAuth]);
+
+  if (isLoading) {
+    return <Preloader />;
+  }
 
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
