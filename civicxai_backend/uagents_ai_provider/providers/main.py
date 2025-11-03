@@ -6,6 +6,7 @@ import os
 import asyncio
 import json
 import logging
+import re
 from datetime import datetime
 from typing import Dict, Any, Optional
 from dotenv import load_dotenv
@@ -13,7 +14,7 @@ from dotenv import load_dotenv
 # Import uagents with minimal configuration
 from uagents import Agent, Context, Protocol, Model
 
-import anthropic
+# Removed: import anthropic
 from openai import OpenAI
 
 # Load environment variables
@@ -26,35 +27,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger("CivicXAI_Provider")
 
-# Keep registration logs visible for monitoring
-# logging.getLogger("uagents.registration").setLevel(logging.ERROR)  # Commented out to see registration status
-
 # Configuration
 PROVIDER_AGENT_PORT = int(os.getenv("PROVIDER_AGENT_PORT", 8002))
 AI_PROVIDER_AGENT_SEED = os.getenv("AI_PROVIDER_AGENT_SEED", "civic_xai_provider_seed_12345")  # Consistent seed for same address
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-4o-mini")  # Default to gpt-4o-mini if not set
+# Removed: ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
-# Detect AI provider based on model name or available keys
-if CHAT_MODEL and (CHAT_MODEL.startswith("gpt-") or CHAT_MODEL.startswith("openai/")):
-    AI_PROVIDER = "openai"
-    AI_API_KEY = OPENAI_API_KEY
-elif CHAT_MODEL and CHAT_MODEL.startswith("claude-"):
-    AI_PROVIDER = "anthropic"
-    AI_API_KEY = ANTHROPIC_API_KEY
-else:
-    # Default to OpenAI if key is available, otherwise Anthropic
-    if OPENAI_API_KEY:
-        AI_PROVIDER = "openai"
-        AI_API_KEY = OPENAI_API_KEY
-    elif ANTHROPIC_API_KEY:
-        AI_PROVIDER = "anthropic"
-        AI_API_KEY = ANTHROPIC_API_KEY
-    else:
-        AI_PROVIDER = None
-        AI_API_KEY = None
-        logger.warning("No AI API key configured. Running in mock mode.")
+# Default to gpt-4o-mini and strictly use OpenAI
+CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-4o-mini")
+if not CHAT_MODEL.startswith("gpt-") and not CHAT_MODEL.startswith("openai/"):
+    logger.warning(f"CHAT_MODEL '{CHAT_MODEL}' does not look like an OpenAI model. Defaulting to gpt-4o-mini.")
+    CHAT_MODEL = "gpt-4o-mini"
+    
+AI_PROVIDER = "openai"
+AI_API_KEY = OPENAI_API_KEY
+
+if not AI_API_KEY:
+    logger.warning("OPENAI_API_KEY not configured. Running in mock mode.")
+
 MAX_TOKENS = int(os.getenv("MAX_TOKENS", 4096))
 TEMPERATURE = float(os.getenv("TEMPERATURE", 0.7))
 
@@ -67,7 +57,7 @@ RETRY_ATTEMPTS = int(os.getenv("RETRY_ATTEMPTS", 3))
 RETRY_DELAY = int(os.getenv("RETRY_DELAY", 2))
 
 # =====================================================
-# Pydantic Models
+# Pydantic Models (Unchanged)
 # =====================================================
 class AllocationRequest(Model):
     """Model for allocation requests from gateway."""
@@ -105,25 +95,22 @@ class AIResponse(Model):
     processing_time: float
 
 # =====================================================
-# Simplified AI Processor
+# Simplified AI Processor (Modified for OpenAI only)
 # =====================================================
 class AIProcessor:
     def __init__(self, provider: str, api_key: str, model: str):
-        self.provider = provider
+        self.provider = provider  # Will always be "openai" now
         self.model = model
         self.request_count = 0
         self.success_count = 0
         
-        # Initialize the appropriate client
+        # Initialize the OpenAI client only
         if provider == "openai" and api_key:
             self.client = OpenAI(api_key=api_key)
             logger.info(f"Initialized OpenAI client with model: {model}")
-        elif provider == "anthropic" and api_key:
-            self.client = anthropic.Anthropic(api_key=api_key)
-            logger.info(f"Initialized Anthropic client with model: {model}")
         else:
             self.client = None
-            logger.warning("No API client initialized - running in mock mode")
+            logger.warning("No OpenAI API client initialized - running in mock mode")
     
     async def process_allocation_request(self, request: AllocationRequest) -> Dict[str, Any]:
         """Process allocation request with PDF/URL context."""
@@ -140,13 +127,16 @@ class AIProcessor:
             if request.files:
                 context_parts.append(f"\n{len(request.files)} documents provided:")
                 for i, file in enumerate(request.files, 1):
-                    context_parts.append(f"  - {file.get('filename')}: {file.get('summary', '')[:200]}")
+                    # Use re.sub to ensure no newlines in summary that could break log/prompt formatting
+                    summary = re.sub(r'\s+', ' ', file.get('summary', '')[:200]) 
+                    context_parts.append(f"  - {file.get('filename')}: {summary}")
             
             # Add URL content if available
             if request.urls:
                 context_parts.append(f"\n{len(request.urls)} URLs referenced:")
                 for url_data in request.urls:
-                    context_parts.append(f"  - {url_data.get('url')}: {url_data.get('summary', '')[:200]}")
+                    summary = re.sub(r'\s+', ' ', url_data.get('summary', '')[:200])
+                    context_parts.append(f"  - {url_data.get('url')}: {summary}")
             
             context = "\n".join(context_parts)
             
@@ -163,7 +153,7 @@ class AIProcessor:
                     "urls_analyzed": len(request.urls) if request.urls else 0
                 }
             else:
-                # Real API call with full context
+                # Real API call with full context (OpenAI only)
                 prompt = f"""Analyze this resource allocation request and provide recommendations:
 
 {context}
@@ -175,64 +165,44 @@ Please provide:
 4. Key findings (3-5 points)
 5. Specific recommendations
 
-Format as JSON."""
+Format your entire response as a single, valid JSON object, without any surrounding text or markdown, for easy machine parsing."""
                 
                 logger.info(f"Processing with {self.provider} using {self.model}")
                 logger.info(f"Context: {len(request.files or [])} docs, {len(request.urls or [])} URLs")
                 
-                # Call appropriate API
-                if self.provider == "openai":
+                try:
+                    # OpenAI API Call
                     response = self.client.chat.completions.create(
                         model=self.model,
                         messages=[
-                            {"role": "system", "content": "You are an expert in resource allocation and policy analysis. Provide data-driven recommendations."},
+                            {"role": "system", "content": "You are an expert in resource allocation and policy analysis. Provide data-driven recommendations. Respond only with a valid JSON object."},
                             {"role": "user", "content": prompt}
                         ],
                         temperature=TEMPERATURE,
-                        max_tokens=MAX_TOKENS
-                    )
-                    ai_response = response.choices[0].message.content
-                    
-                elif self.provider == "anthropic":
-                    response = self.client.messages.create(
-                        model=self.model,
                         max_tokens=MAX_TOKENS,
-                        temperature=TEMPERATURE,
-                        messages=[
-                            {"role": "user", "content": prompt}
-                        ]
+                        response_format={"type": "json_object"} # Use json_object for better parsing
                     )
-                    ai_response = response.content[0].text
-                else:
-                    ai_response = None
-                
+                    ai_response_content = response.choices[0].message.content
+                    
+                except Exception as api_e:
+                    logger.error(f"OpenAI API call failed: {api_e}")
+                    raise api_e
+
                 # Try to parse JSON response
                 try:
-                    if ai_response:
-                        import re
-                        # Extract JSON from response (might be wrapped in markdown)
-                        json_match = re.search(r'\{[\s\S]*\}', ai_response)
-                        if json_match:
-                            parsed = json.loads(json_match.group())
-                            result = {
-                                "priority_level": parsed.get("priority_level", "medium"),
-                                "recommended_allocation_percentage": parsed.get("recommended_allocation_percentage", 50.0),
-                                "confidence_score": parsed.get("confidence_score", 0.7),
-                                "key_findings": parsed.get("key_findings", []),
-                                "recommendations": parsed.get("recommendations", []),
-                                "ai_analysis": ai_response,
-                                "documents_analyzed": len(request.files) if request.files else 0,
-                                "urls_analyzed": len(request.urls) if request.urls else 0
-                            }
-                        else:
-                            # Fallback if no JSON found
-                            result = {
-                                "priority_level": "medium",
-                                "confidence_score": 0.7,
-                                "ai_analysis": ai_response,
-                                "documents_analyzed": len(request.files) if request.files else 0,
-                                "urls_analyzed": len(request.urls) if request.urls else 0
-                            }
+                    if ai_response_content:
+                        # Since we used response_format={"type": "json_object"}, it should be clean JSON
+                        parsed = json.loads(ai_response_content)
+                        result = {
+                            "priority_level": parsed.get("priority_level", "medium"),
+                            "recommended_allocation_percentage": parsed.get("recommended_allocation_percentage", 50.0),
+                            "confidence_score": parsed.get("confidence_score", 0.7),
+                            "key_findings": parsed.get("key_findings", []),
+                            "recommendations": parsed.get("recommendations", []),
+                            "ai_analysis": ai_response_content,
+                            "documents_analyzed": len(request.files) if request.files else 0,
+                            "urls_analyzed": len(request.urls) if request.urls else 0
+                        }
                     else:
                         result = {
                             "priority_level": "medium",
@@ -241,11 +211,11 @@ Format as JSON."""
                             "urls_analyzed": len(request.urls) if request.urls else 0
                         }
                 except json.JSONDecodeError:
-                    # If JSON parsing fails, return raw response
+                    # If JSON parsing fails (despite response_format), return raw response
                     result = {
                         "priority_level": "medium",
                         "confidence_score": 0.7,
-                        "ai_analysis": ai_response,
+                        "ai_analysis": ai_response_content,
                         "documents_analyzed": len(request.files) if request.files else 0,
                         "urls_analyzed": len(request.urls) if request.urls else 0
                     }
@@ -275,14 +245,41 @@ Format as JSON."""
         try:
             self.request_count += 1
             
-            # Mock response for demonstration
+            # --- Modified to use OpenAI for explanation if client is available ---
+            if not self.client:
+                logger.warning("Using mock explanation response - no API key configured")
+                explanation_text = f"Allocation for {request.region_id} was made based on priority metrics (mocked response)."
+            else:
+                prompt = f"""Given the following allocation data and context, provide a clear, concise explanation of the decision in {request.language}.
+
+Allocation Data: {json.dumps(request.allocation_data)}
+Context: {request.context}
+
+Please generate an explanation suitable for a public audience. Focus on the 'key_findings' and 'recommendations' from the allocation data."""
+                
+                try:
+                    response = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": f"You are a public communication expert. Provide a clear and concise explanation for a resource allocation decision in {request.language}."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=TEMPERATURE,
+                        max_tokens=MAX_TOKENS // 2 # Use fewer tokens for explanation
+                    )
+                    explanation_text = response.choices[0].message.content
+                except Exception as api_e:
+                    logger.error(f"OpenAI Explanation API call failed: {api_e}")
+                    explanation_text = f"Allocation explanation failed due to API error: {str(api_e)}"
+            
             result = {
-                "explanation": f"Allocation for {request.region_id} was made based on priority metrics.",
+                "explanation": explanation_text,
                 "language": request.language,
                 "region_id": request.region_id,
                 "allocation_summary": request.allocation_data
             }
-            
+            # ---------------------------------------------------------------------
+
             self.success_count += 1
             processing_time = (datetime.now() - start_time).total_seconds()
             
@@ -302,21 +299,18 @@ Format as JSON."""
             }
 
 # =====================================================
-# Agent Setup
+# Agent Setup (Unchanged)
 # =====================================================
 def create_agent():
     """Create the provider agent with Almanac registration enabled."""
     try:
         # Create agent with seed for consistent address
-        # Will automatically register on Almanac and request testnet funds
         agent = Agent(
             name="CivicXAI_Provider",
             seed=AI_PROVIDER_AGENT_SEED,
             port=PROVIDER_AGENT_PORT,
             endpoint=[f"http://localhost:{PROVIDER_AGENT_PORT}"]
-            # mailbox parameter can be added later for AgentVerse integration
         )
-        
         return agent
     except Exception as e:
         logger.error(f"Failed to create agent: {e}")
@@ -325,7 +319,7 @@ def create_agent():
 # Initialize components
 ai_processor = AIProcessor(AI_PROVIDER, AI_API_KEY, CHAT_MODEL)
 
-# Create protocol
+# Create protocol (Unchanged)
 provider_protocol = Protocol(name="CivicXAI_Provider_Protocol", version="2.0.0")
 
 @provider_protocol.on_message(model=AllocationRequest)
@@ -420,12 +414,12 @@ async def log_statistics(ctx: Context):
                f"Rate: {stats['success_rate']:.2%}")
 
 # =====================================================
-# Main Entry Point
+# Main Entry Point (Unchanged)
 # =====================================================
 async def main():
     """Main application entry point."""
     logger.info("=" * 60)
-    logger.info(" Starting CivicXAI Provider Agent")
+    logger.info(" Starting CivicXAI Provider Agent (OpenAI Only)")
     logger.info("=" * 60)
     
     # Create agent

@@ -52,7 +52,7 @@ logger = logging.getLogger("CivicXAI_Gateway")
 
 
 GATEWAY_AGENT_SEED = os.getenv("GATEWAY_AGENT_SEED", "civic_xai_gateway_seed")
-GATEWAY_AGENT_PORT = int(os.getenv("GATEWAY_AGENT_PORT", 8000))
+GATEWAY_AGENT_PORT = int(os.getenv("GATEWAY_AGENT_PORT", 8054))
 GATEWAY_AGENT_ENDPOINT = os.getenv(
     "GATEWAY_AGENT_ENDPOINT", 
     f"http://127.0.0.1:{GATEWAY_AGENT_PORT}/submit"
